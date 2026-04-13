@@ -1,91 +1,270 @@
-import { UserCircle, Award, History, Settings as SettingsIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Camera, Save, X } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+
+interface ProfileData {
+  full_name: string;
+  bio: string;
+  life_chapter: string;
+  goal_statement: string;
+  streak_count: number;
+  is_verified: boolean;
+  avatar_url: string | null;
+}
+
+const chapters = [
+  "Fitness Discipline", "Study Grind", "Career Focus",
+  "Breakup Recovery", "Dopamine Detox", "Sleep Reset"
+];
 
 export default function Profile() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Editable fields
+  const [fullName, setFullName] = useState('');
+  const [bio, setBio] = useState('');
+  const [goalStatement, setGoalStatement] = useState('');
+  const [lifeChapter, setLifeChapter] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    loadProfile();
+  }, [user]);
+
+  async function loadProfile() {
+    const { data } = await supabase
+      .from('users')
+      .select('full_name, bio, life_chapter, goal_statement, streak_count, is_verified, avatar_url')
+      .eq('id', user!.id)
+      .single();
+
+    if (data) {
+      setProfile(data);
+      setFullName(data.full_name || '');
+      setBio(data.bio || '');
+      setGoalStatement(data.goal_statement || '');
+      setLifeChapter(data.life_chapter || '');
+    }
+    setLoading(false);
+  }
+
+  async function handleSave() {
+    if (!user) return;
+    setSaving(true);
+    setError(null);
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        full_name: fullName,
+        bio: bio,
+        goal_statement: goalStatement,
+        life_chapter: lifeChapter,
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      setError(error.message);
+      setSaving(false);
+      return;
+    }
+
+    await loadProfile();
+    setEditing(false);
+    setSuccess(true);
+    setSaving(false);
+    setTimeout(() => setSuccess(false), 3000);
+  }
+
+  function handleCancel() {
+    if (profile) {
+      setFullName(profile.full_name || '');
+      setBio(profile.bio || '');
+      setGoalStatement(profile.goal_statement || '');
+      setLifeChapter(profile.life_chapter || '');
+    }
+    setEditing(false);
+    setError(null);
+  }
+
+  const avatarUrl = profile?.avatar_url ||
+    `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'SQ'}`;
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 pb-20 md:pb-0">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20 md:pb-0">
       {/* Header */}
-      <div className="glass-card p-8 rounded-3xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-          <div className="w-32 h-32 rounded-full border-4 border-surface overflow-hidden shadow-2xl">
-            <img src="https://picsum.photos/seed/avatar1/200/200" className="w-full h-full object-cover" alt="Profile" referrerPolicy="no-referrer" />
+      <div className="flex items-center justify-between">
+        <h1 className="font-serif text-3xl text-white">Your Profile</h1>
+        {!editing ? (
+          <button
+            onClick={() => setEditing(true)}
+            className="px-5 py-2 rounded-full border border-white/20 text-sm font-medium text-white hover:bg-white/5 transition-colors"
+          >
+            Edit Profile
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 rounded-full border border-white/20 text-sm font-medium text-text-secondary hover:text-white transition-colors flex items-center gap-1"
+            >
+              <X className="w-4 h-4" /> Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-5 py-2 rounded-full bg-primary text-background text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1 disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {success && (
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+          ✓ Profile updated successfully
+        </div>
+      )}
+
+      {error && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Avatar + Name */}
+      <div className="glass-card p-6 rounded-3xl">
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-20 h-20 rounded-full border-2 border-white/10 object-cover"
+            />
+            {editing && (
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center cursor-pointer">
+                <Camera className="w-5 h-5 text-white" />
+              </div>
+            )}
           </div>
           <div className="flex-1">
-            <h1 className="font-serif text-3xl text-white mb-2">Alex Chen</h1>
-            <p className="text-text-secondary mb-6">Joined March 2026 • Premium Member</p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-4">
-              <div className="px-4 py-2 rounded-xl bg-surface border border-white/5">
-                <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Missions Completed</p>
-                <p className="text-xl font-serif text-white">4</p>
-              </div>
-              <div className="px-4 py-2 rounded-xl bg-surface border border-white/5">
-                <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Best Streak</p>
-                <p className="text-xl font-serif text-white">28 Days</p>
-              </div>
-              <div className="px-4 py-2 rounded-xl bg-surface border border-white/5 border-primary/20">
-                <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Avg Consistency</p>
-                <p className="text-xl font-serif text-primary">94%</p>
-              </div>
-            </div>
+            {editing ? (
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary/50 transition-all text-lg font-medium mb-2"
+                placeholder="Your full name"
+              />
+            ) : (
+              <h2 className="text-xl font-medium text-white mb-1">
+                {profile?.full_name}
+              </h2>
+            )}
+            <p className="text-sm text-text-secondary">{user?.email}</p>
           </div>
-          <div>
-            <Link to="/app/settings" className="w-10 h-10 rounded-full bg-surface border border-white/10 flex items-center justify-center text-text-secondary hover:text-white transition-colors">
-              <SettingsIcon className="w-5 h-5" />
-            </Link>
-          </div>
+        </div>
+
+        {/* Bio */}
+        <div className="mt-6">
+          <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">
+            Bio
+          </label>
+          {editing ? (
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all resize-none min-h-[80px]"
+              placeholder="Tell your pod about yourself..."
+            />
+          ) : (
+            <p className="text-text-secondary text-sm">
+              {profile?.bio || 'No bio yet. Click Edit Profile to add one.'}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Current Mission */}
-        <div className="glass-card p-8 rounded-3xl">
-          <div className="flex items-center gap-3 mb-6">
-            <Award className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-medium text-white">Current Mission</h2>
-          </div>
-          <div className="p-6 rounded-2xl bg-surface border border-white/5">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="font-serif text-xl text-white mb-1">Deep Work Discipline</h3>
-                <p className="text-sm text-text-secondary">Day 12 of 30</p>
-              </div>
-              <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
-                Active
-              </div>
-            </div>
-            <div className="w-full h-2 bg-background rounded-full overflow-hidden">
-              <div className="h-full bg-primary w-[40%]" />
-            </div>
-          </div>
+      {/* Mission Info */}
+      <div className="glass-card p-6 rounded-3xl space-y-5">
+        <h3 className="text-sm font-medium text-white uppercase tracking-wider">
+          Current Mission
+        </h3>
+
+        {/* Life Chapter */}
+        <div>
+          <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">
+            Chapter
+          </label>
+          {editing ? (
+            <select
+              value={lifeChapter}
+              onChange={(e) => setLifeChapter(e.target.value)}
+              className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all appearance-none"
+            >
+              {chapters.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-white font-medium">{profile?.life_chapter}</p>
+          )}
         </div>
 
-        {/* Mission History */}
-        <div className="glass-card p-8 rounded-3xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <History className="w-5 h-5 text-white" />
-              <h2 className="text-lg font-medium text-white">Mission History</h2>
-            </div>
-            <button className="text-sm text-text-secondary hover:text-white transition-colors">View All</button>
+        {/* Goal Statement */}
+        <div>
+          <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">
+            Goal
+          </label>
+          {editing ? (
+            <textarea
+              value={goalStatement}
+              onChange={(e) => setGoalStatement(e.target.value)}
+              className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all resize-none min-h-[80px]"
+              placeholder="What does success look like in 30 days?"
+            />
+          ) : (
+            <p className="text-text-secondary text-sm">
+              {profile?.goal_statement || '—'}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="glass-card p-6 rounded-3xl">
+        <h3 className="text-sm font-medium text-white uppercase tracking-wider mb-4">
+          Stats
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-surface rounded-2xl p-4 text-center">
+            <p className="text-2xl font-serif text-white">{profile?.streak_count || 0}</p>
+            <p className="text-xs text-text-secondary uppercase tracking-wider mt-1">
+              Current Streak
+            </p>
           </div>
-          <div className="space-y-4">
-            {[
-              { title: "Morning Runner", date: "Feb 2026", result: "Completed", score: "96%" },
-              { title: "Dopamine Detox", date: "Jan 2026", result: "Completed", score: "88%" },
-              { title: "Sleep Reset", date: "Nov 2025", result: "Completed", score: "100%" }
-            ].map((mission, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-surface border border-white/5">
-                <div>
-                  <p className="font-medium text-white">{mission.title}</p>
-                  <p className="text-xs text-text-secondary">{mission.date}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-emerald-400">{mission.result}</p>
-                  <p className="text-xs text-text-muted">{mission.score} Consistency</p>
-                </div>
-              </div>
-            ))}
+          <div className="bg-surface rounded-2xl p-4 text-center">
+            <p className="text-2xl font-serif text-white">30</p>
+            <p className="text-xs text-text-secondary uppercase tracking-wider mt-1">
+              Mission Days
+            </p>
           </div>
         </div>
       </div>
