@@ -75,7 +75,17 @@ export default function Dashboard() {
     setError(null);
 
     const today = new Date().toISOString().split('T')[0];
-    const newStreak = streakCount + 1;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+    // Check if user checked in yesterday
+    const { data: yesterdayData } = await supabase
+      .from('check_ins')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('check_in_date', yesterday)
+      .maybeSingle();
+
+    const newStreak = yesterdayData ? streakCount + 1 : 1;
 
     const { error: checkInError } = await supabase
       .from('check_ins')
@@ -94,7 +104,6 @@ export default function Dashboard() {
       return;
     }
 
-    // Update streak on user profile regardless
     await supabase
       .from('users')
       .update({ streak_count: newStreak })
