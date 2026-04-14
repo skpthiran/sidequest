@@ -56,7 +56,7 @@ export default function LandingPage() {
           >
             <div className="glass-card rounded-2xl p-2 shadow-2xl transform rotate-y-[-5deg] rotate-x-[5deg]">
               <img 
-                src="https://picsum.photos/seed/dashboard/1200/800?blur=2" 
+                src="/hero-dashboard.png" 
                 alt="Dashboard Preview" 
                 className="rounded-xl border border-white/10"
                 referrerPolicy="no-referrer"
