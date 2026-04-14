@@ -29,6 +29,7 @@ export default function Onboarding() {
   const [timezone, setTimezone] = useState('UTC');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fullName, setFullName] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -61,6 +62,7 @@ export default function Onboarding() {
       .upsert({
         id: user.id,
         email: user.email,
+        full_name: fullName,
         life_chapter: selectedChapter,
         goal_statement: goalStatement,
         timezone: timezone,
@@ -145,6 +147,18 @@ export default function Onboarding() {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">
+                      Your Name
+                    </label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                      placeholder="e.g., Alex"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">
                       Specific Goal
                     </label>
                     <textarea
@@ -216,7 +230,7 @@ export default function Onboarding() {
             </button>
             <button
               onClick={handleNext}
-              disabled={(step === 1 && !selectedChapter) || saving}
+              disabled={(step === 1 && !selectedChapter) || (step === 2 && !fullName.trim()) || saving}
               className="px-8 py-3 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : step === 3 ? 'Enter Mission Control' : 'Continue'}
