@@ -161,7 +161,7 @@ export default function Dashboard() {
               {!checkedIn ? (
                 <button
                   onClick={() => setShowCheckIn(true)}
-                  className="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+                  className="btn-primary w-full sm:w-auto gap-2"
                 >
                   <CheckCircle2 className="w-5 h-5" />
                   Check In Now
@@ -325,7 +325,7 @@ export default function Dashboard() {
                 <textarea
                   value={reflection}
                   onChange={(e) => setReflection(e.target.value)}
-                  className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all min-h-[100px] resize-none"
+                  className="input-field min-h-[100px] resize-none"
                   placeholder="How did it go today?"
                 />
               </div>
@@ -333,7 +333,7 @@ export default function Dashboard() {
               <button
                 onClick={handleSubmitCheckIn}
                 disabled={saving}
-                className="w-full py-4 rounded-xl bg-white text-background font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary w-full"
               >
                 {saving ? 'Saving...' : 'Submit Check-in'}
               </button>

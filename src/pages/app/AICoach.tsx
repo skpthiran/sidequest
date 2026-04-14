@@ -209,7 +209,7 @@ YOUR ROLE:
             <button
               onClick={generateWeeklyInsight}
               disabled={loadingInsight}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-50"
+              className="btn-gold gap-2 px-4 py-2 text-sm"
             >
               <RefreshCw className={`w-3 h-3 ${loadingInsight ? 'animate-spin' : ''}`} />
               {insightLoaded ? 'Refresh' : 'Generate'}
@@ -334,12 +334,12 @@ YOUR ROLE:
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                 placeholder="Ask your coach anything..."
-                className="flex-1 bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all text-sm"
+                className="input-field"
               />
               <button
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
-                className="px-4 py-3 rounded-xl bg-primary/20 border border-primary/20 text-primary hover:bg-primary/30 transition-colors disabled:opacity-50"
+                className="btn-gold px-4 py-3"
               >
                 <Send className="w-4 h-4" />
               </button>

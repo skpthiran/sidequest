@@ -218,7 +218,7 @@ export default function PodWall() {
         </p>
         <button
           onClick={() => navigate('/app/discover')}
-          className="px-6 py-3 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors"
+          className="btn-primary"
         >
           Go to Discover
         </button>
@@ -336,12 +336,12 @@ export default function PodWall() {
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               placeholder="Message your pod..."
-              className="flex-1 bg-surface border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-all"
+              className="input-field"
             />
             <button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || sending}
-              className="px-4 py-3 rounded-xl bg-primary/20 border border-primary/20 text-primary hover:bg-primary/30 transition-colors disabled:opacity-50"
+              className="btn-gold px-4 py-3"
             >
               <Send className="w-4 h-4" />
             </button>
