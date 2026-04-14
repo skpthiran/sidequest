@@ -1,78 +1,169 @@
-import { Compass, ArrowRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Zap, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
+import { getOrCreatePod, getUserPod } from '../../lib/podMatching';
 import { cn } from '@/lib/utils';
 
+const chapters = [
+  { name: "Fitness Discipline", emoji: "💪", desc: "Build your body, build discipline." },
+  { name: "Study Grind", emoji: "📚", desc: "Lock in. Academic excellence awaits." },
+  { name: "Career Focus", emoji: "🚀", desc: "Level up your professional game." },
+  { name: "Breakup Recovery", emoji: "💔", desc: "Heal, grow, and move forward." },
+  { name: "Dopamine Detox", emoji: "🧘", desc: "Reclaim your focus and clarity." },
+  { name: "Sleep Reset", emoji: "🌙", desc: "Fix your sleep, fix your life." },
+];
+
+interface ChapterCount {
+  life_chapter: string;
+  count: number;
+}
+
 export default function Discover() {
-  const categories = ["All", "Fitness", "Career", "Mindset", "Recovery"];
-  
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [userChapter, setUserChapter] = useState<string>('');
+  const [chapterCounts, setChapterCounts] = useState<ChapterCount[]>([]);
+  const [hasPod, setHasPod] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    loadData();
+  }, [user]);
+
+  async function loadData() {
+    setLoading(true);
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('life_chapter')
+      .eq('id', user!.id)
+      .single();
+
+    if (profile) setUserChapter(profile.life_chapter);
+
+    const pod = await getUserPod(user!.id);
+    if (pod?.pod_id) setHasPod(true);
+
+    // Count users per chapter
+    const { data: counts } = await supabase
+      .from('users')
+      .select('life_chapter')
+      .eq('is_onboarded', true);
+
+    if (counts) {
+      const tally: Record<string, number> = {};
+      counts.forEach(({ life_chapter }) => {
+        if (life_chapter) tally[life_chapter] = (tally[life_chapter] || 0) + 1;
+      });
+      setChapterCounts(
+        Object.entries(tally).map(([life_chapter, count]) => ({ life_chapter, count }))
+      );
+    }
+
+    setLoading(false);
+  }
+
+  async function handleJoinPod() {
+    if (!user || !userChapter) return;
+    setJoining(true);
+    const podId = await getOrCreatePod(user.id, userChapter);
+    if (podId) {
+      setHasPod(true);
+      navigate('/app/pod');
+    }
+    setJoining(false);
+  }
+
+  const getMemberCount = (chapter: string) =>
+    chapterCounts.find((c) => c.life_chapter === chapter)?.count || 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 pb-20 md:pb-0">
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-        <div>
-          <h1 className="font-serif text-3xl text-white mb-2">Discover Chapters</h1>
-          <p className="text-text-secondary">Find your next 30-day mission.</p>
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-          {categories.map((cat, i) => (
-            <button 
-              key={cat}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                i === 0 ? "bg-white text-background" : "bg-surface border border-white/10 text-text-secondary hover:text-white"
-              )}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+      <div>
+        <h1 className="font-serif text-3xl text-white mb-2">Discover</h1>
+        <p className="text-text-secondary">Find your chapter. Join your pod.</p>
       </div>
 
-      {/* Featured */}
-      <div className="glass-card p-8 rounded-3xl relative overflow-hidden group cursor-pointer border-primary/20">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 mb-6">
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">Expert-Led Cohort</span>
+      {/* Your Chapter CTA */}
+      {userChapter && (
+        <div className="glass-card p-6 rounded-3xl border-primary/20">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <p className="text-sm text-text-secondary mb-1">Your current chapter</p>
+              <h2 className="text-xl font-medium text-white">{userChapter}</h2>
+              <p className="text-sm text-text-secondary mt-1">
+                {getMemberCount(userChapter)} people in this chapter
+              </p>
             </div>
-            <h2 className="font-serif text-3xl text-white mb-4">75 Hard Preparation</h2>
-            <p className="text-text-secondary mb-8 leading-relaxed">
-              A 30-day ramp-up mission designed to build the baseline discipline required before attempting the full 75 Hard challenge.
-            </p>
-            <button className="px-6 py-3 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors flex items-center gap-2">
-              View Details <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="hidden md:block">
-            <img src="https://picsum.photos/seed/fitness/800/600" className="rounded-2xl border border-white/10 shadow-2xl" alt="Featured" referrerPolicy="no-referrer" />
+            {hasPod ? (
+              <button
+                onClick={() => navigate('/app/pod')}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                View Your Pod
+              </button>
+            ) : (
+              <button
+                onClick={handleJoinPod}
+                disabled={joining}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                <Zap className="w-4 h-4" />
+                {joining ? 'Matching...' : 'Join a Pod Now'}
+              </button>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[
-          { title: "Dopamine Detox", category: "Mindset", members: "1.2k active", color: "from-purple-500/20 to-indigo-500/20" },
-          { title: "Sleep Reset", category: "Recovery", members: "850 active", color: "from-slate-500/20 to-gray-500/20" },
-          { title: "Morning Runner", category: "Fitness", members: "2.1k active", color: "from-blue-500/20 to-cyan-500/20" },
-          { title: "Creator Sprint", category: "Career", members: "420 active", color: "from-amber-500/20 to-orange-500/20" },
-          { title: "Sober Month", category: "Mindset", members: "3.5k active", color: "from-emerald-500/20 to-teal-500/20" },
-          { title: "Reading Habit", category: "Mindset", members: "1.8k active", color: "from-rose-500/20 to-pink-500/20" }
-        ].map((chapter, i) => (
-          <div key={i} className="group relative p-6 rounded-2xl border border-white/5 bg-surface hover:border-white/20 transition-all duration-300 cursor-pointer overflow-hidden">
-            <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", chapter.color)} />
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-12">
-                <span className="text-xs font-medium text-text-secondary uppercase tracking-wider">{chapter.category}</span>
-                <Compass className="w-4 h-4 text-text-muted group-hover:text-white transition-colors" />
+      {/* All Chapters */}
+      <div>
+        <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider mb-4">
+          All Chapters
+        </h3>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {chapters.map((chapter) => {
+            const count = getMemberCount(chapter.name);
+            const isYours = chapter.name === userChapter;
+            return (
+              <div
+                key={chapter.name}
+                className={cn(
+                  "glass-card p-6 rounded-2xl border transition-all",
+                  isYours
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-white/5 hover:border-white/20"
+                )}
+              >
+                <div className="text-3xl mb-3">{chapter.emoji}</div>
+                <h3 className="font-medium text-white mb-1">{chapter.name}</h3>
+                <p className="text-xs text-text-secondary mb-3">{chapter.desc}</p>
+                <div className="flex items-center gap-2 text-xs text-text-muted">
+                  <Users className="w-3 h-3" />
+                  <span>{count} {count === 1 ? 'person' : 'people'} active</span>
+                  {isYours && (
+                    <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">
+                      Yours
+                    </span>
+                  )}
+                </div>
               </div>
-              <h3 className="text-xl font-serif text-white mb-2">{chapter.title}</h3>
-              <p className="text-sm text-text-secondary mb-6">{chapter.members}</p>
-              <div className="flex items-center text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-                Join Waitlist <ArrowRight className="w-4 h-4 ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-              </div>
-            </div>
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
