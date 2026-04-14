@@ -151,7 +151,7 @@ export default function LandingPage() {
                 We match you with peers who are in the exact same season of life. Same goals, same struggles, same timezone.
               </p>
             </div>
-            <Link to="/chapters" className="text-primary hover:text-white transition-colors flex items-center gap-2 font-medium">
+            <Link to="#how-it-works" className="text-primary hover:text-white transition-colors flex items-center gap-2 font-medium">
               View all chapters <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -335,7 +335,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-3 text-sm text-text-primary"><CheckCircle2 className="w-4 h-4 text-text-muted" /> Creator/Expert guidance</li>
                 <li className="flex items-center gap-3 text-sm text-text-primary"><CheckCircle2 className="w-4 h-4 text-text-muted" /> Exclusive resources</li>
               </ul>
-              <Link to="/discover" className="w-full py-3 rounded-full bg-surface border border-white/10 text-white font-medium hover:bg-white/5 transition-colors text-center">
+              <Link to="/signup" className="w-full py-3 rounded-full bg-surface border border-white/10 text-white font-medium hover:bg-white/5 transition-colors text-center">
                 Browse Cohorts
               </Link>
             </div>
