@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Flame, Users } from 'lucide-react';
+import { CheckCircle2, Flame, Send } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserPod, getPodMembers } from '../../lib/podMatching';
 import { supabase } from '../../lib/supabase';
@@ -33,19 +33,77 @@ interface CheckIn {
   };
 }
 
+interface Message {
+  id: string;
+  pod_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  users: {
+    full_name: string;
+    avatar_url: string | null;
+  } | null;
+}
+
 export default function PodWall() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [podData, setPodData] = useState<any>(null);
   const [members, setMembers] = useState<PodMember[]>([]);
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasPod, setHasPod] = useState(false);
+  const [podId, setPodId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
     loadPodData();
   }, [user]);
+
+  useEffect(() => {
+    if (!podId) return;
+
+    // Subscribe to realtime messages
+    const channel = supabase
+      .channel(`pod-chat-${podId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `pod_id=eq.${podId}`,
+        },
+        async (payload) => {
+          // Fetch sender info for the new message
+          const { data: userData } = await supabase
+            .from('users')
+            .select('full_name, avatar_url')
+            .eq('id', payload.new.sender_id)
+            .single();
+
+          const newMsg: Message = {
+            ...(payload.new as any),
+            users: userData || null,
+          };
+
+          setMessages((prev) => [...prev, newMsg]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [podId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   async function loadPodData() {
     setLoading(true);
@@ -60,6 +118,7 @@ export default function PodWall() {
 
     setHasPod(true);
     setPodData(pod);
+    setPodId(pod.pod_id);
 
     const podMembers = await getPodMembers(pod.pod_id);
     const formattedMembers = (podMembers as any[]).map(m => ({
@@ -68,7 +127,6 @@ export default function PodWall() {
     }));
     setMembers(formattedMembers as PodMember[]);
 
-    // Fetch check-ins for this pod's members
     const memberIds = formattedMembers.map((m: any) => m.user_id);
     const today = new Date().toISOString().split('T')[0];
 
@@ -90,7 +148,42 @@ export default function PodWall() {
       setCheckIns(formattedCheckIns as CheckIn[]);
     }
 
+    // Load existing messages
+    const { data: existingMessages } = await supabase
+      .from('messages')
+      .select(`
+        id, pod_id, sender_id, content, created_at,
+        users ( full_name, avatar_url )
+      `)
+      .eq('pod_id', pod.pod_id)
+      .order('created_at', { ascending: true })
+      .limit(50);
+
+    if (existingMessages) {
+      const formattedMessages = (existingMessages as any[]).map(m => ({
+        ...m,
+        users: Array.isArray(m.users) ? m.users[0] : m.users
+      }));
+      setMessages(formattedMessages as Message[]);
+    }
+
     setLoading(false);
+  }
+
+  async function handleSendMessage() {
+    if (!newMessage.trim() || !user || !podId || sending) return;
+    setSending(true);
+
+    const { error } = await supabase
+      .from('messages')
+      .insert({
+        pod_id: podId,
+        sender_id: user.id,
+        content: newMessage.trim(),
+      });
+
+    if (!error) setNewMessage('');
+    setSending(false);
   }
 
   const getAvatar = (name: string, url: string | null) =>
@@ -101,6 +194,11 @@ export default function PodWall() {
   const checkedInToday = new Set(
     checkIns.filter((c) => c.check_in_date === today).map((c) => c.user_id)
   );
+
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   if (loading) {
     return (
@@ -147,7 +245,6 @@ export default function PodWall() {
           </div>
         </div>
 
-        {/* Members */}
         <div className="flex flex-wrap gap-3">
           {members.map((member) => {
             const m = member.users;
@@ -178,6 +275,80 @@ export default function PodWall() {
         </div>
       </div>
 
+      {/* Pod Chat */}
+      <div className="glass-card rounded-3xl overflow-hidden">
+        <div className="p-5 border-b border-white/5">
+          <h3 className="text-sm font-medium text-white uppercase tracking-wider">
+            Pod Chat
+          </h3>
+          <p className="text-xs text-text-secondary mt-1">Messages are live — no refresh needed</p>
+        </div>
+
+        {/* Messages */}
+        <div className="p-5 space-y-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+          {messages.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-text-muted text-sm">No messages yet. Say hi to your pod! 👋</p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isMe = msg.sender_id === user?.id;
+              const name = msg.users?.full_name || 'Member';
+              const avatar = getAvatar(name, msg.users?.avatar_url || null);
+              return (
+                <div key={msg.id} className={cn("flex gap-3", isMe && "flex-row-reverse")}>
+                  {!isMe && (
+                    <img
+                      src={avatar}
+                      alt={name}
+                      className="w-8 h-8 rounded-full border border-white/10 object-cover flex-shrink-0 mt-1"
+                    />
+                  )}
+                  <div className={cn("max-w-[75%] space-y-1", isMe && "items-end flex flex-col")}>
+                    {!isMe && (
+                      <span className="text-xs text-text-muted px-1">{name.split(' ')[0]}</span>
+                    )}
+                    <div className={cn(
+                      "px-4 py-2.5 rounded-2xl text-sm leading-relaxed",
+                      isMe
+                        ? "bg-primary/20 text-white border border-primary/20 rounded-tr-sm"
+                        : "bg-surface text-text-secondary border border-white/5 rounded-tl-sm"
+                    )}>
+                      {msg.content}
+                    </div>
+                    <span className="text-[10px] text-text-muted px-1">
+                      {formatTime(msg.created_at)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="p-4 border-t border-white/5">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              placeholder="Message your pod..."
+              className="flex-1 bg-surface border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-all"
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim() || sending}
+              className="px-4 py-3 rounded-xl bg-primary/20 border border-primary/20 text-primary hover:bg-primary/30 transition-colors disabled:opacity-50"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Check-in Feed */}
       <div>
         <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider mb-4">
@@ -188,9 +359,7 @@ export default function PodWall() {
           <div className="glass-card p-8 rounded-3xl text-center">
             <div className="text-3xl mb-3">🌅</div>
             <p className="text-white font-medium mb-1">No check-ins yet</p>
-            <p className="text-text-secondary text-sm">
-              Be the first to check in today!
-            </p>
+            <p className="text-text-secondary text-sm">Be the first to check in today!</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -225,9 +394,7 @@ export default function PodWall() {
                       )}
                       <div className="flex items-center gap-1 mt-2">
                         <Flame className="w-3 h-3 text-accent-amber" />
-                        <span className="text-xs text-text-muted">
-                          Day {checkIn.streak_day}
-                        </span>
+                        <span className="text-xs text-text-muted">Day {checkIn.streak_day}</span>
                       </div>
                     </div>
                   </div>
