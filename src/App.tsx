@@ -18,6 +18,8 @@ const Discover = lazy(() => import('./pages/app/Discover'));
 const Profile = lazy(() => import('./pages/app/Profile'));
 const Settings = lazy(() => import('./pages/app/Settings'));
 const Graduation = lazy(() => import('./pages/app/Graduation'));
+const InvitePage = lazy(() => import('./pages/public/InvitePage'));
+
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
@@ -33,7 +35,9 @@ export default function App() {
           <Routes>
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/invite/:token" element={<InvitePage />} />
             </Route>
+
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/onboarding" element={<Onboarding />} />
