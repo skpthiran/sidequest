@@ -5,6 +5,8 @@ import { ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { acceptInvite } from '../../lib/invites';
+
 
 const chapters = [
   "Fitness Discipline", "Study Grind", "Career Focus",
@@ -75,7 +77,20 @@ export default function Onboarding() {
       return;
     }
 
-    navigate('/app');
+    if (!error) {
+      const pendingToken = sessionStorage.getItem('pendingInviteToken');
+      if (pendingToken) {
+        sessionStorage.removeItem('pendingInviteToken');
+        try {
+          await acceptInvite(pendingToken, user.id);
+        } catch (e) {
+          // invite may be expired or already used — proceed anyway
+          console.warn('Invite accept failed:', e);
+        }
+      }
+      navigate('/app');
+    }
+
   };
 
   const handleBack = () => {
