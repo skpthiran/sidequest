@@ -180,7 +180,7 @@ export default function Settings() {
                 type="email"
                 value={user?.email || ''}
                 disabled
-                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-text-secondary focus:outline-none transition-all opacity-60 cursor-not-allowed"
+                className="input-field opacity-60 cursor-not-allowed"
               />
               <p className="text-xs text-text-muted mt-1">Email cannot be changed.</p>
             </div>
@@ -191,7 +191,7 @@ export default function Settings() {
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all appearance-none"
+                className="input-field appearance-none"
               >
                 {timezones.map((tz) => (
                   <option key={tz.value} value={tz.value}>{tz.label}</option>
@@ -209,7 +209,7 @@ export default function Settings() {
             <button
               onClick={handleSaveAccount}
               disabled={savingAccount}
-              className="px-6 py-2.5 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors text-sm disabled:opacity-50"
+              className="btn-ghost px-6 py-2.5 text-sm"
             >
               {savingAccount ? 'Saving...' : 'Save Changes'}
             </button>
@@ -232,7 +232,7 @@ export default function Settings() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Min. 8 characters"
-                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all"
+                className="input-field"
               />
             </div>
             <div>
@@ -244,7 +244,7 @@ export default function Settings() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat new password"
-                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all"
+                className="input-field"
               />
             </div>
 
@@ -258,7 +258,7 @@ export default function Settings() {
             <button
               onClick={handleChangePassword}
               disabled={savingPassword || !newPassword}
-              className="px-6 py-2.5 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors text-sm disabled:opacity-50"
+              className="btn-ghost px-6 py-2.5 text-sm"
             >
               {savingPassword ? 'Updating...' : 'Update Password'}
             </button>
@@ -308,7 +308,7 @@ export default function Settings() {
             <button
               onClick={handleSaveNotifs}
               disabled={savingNotifs}
-              className="px-6 py-2.5 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors text-sm disabled:opacity-50"
+              className="btn-ghost px-6 py-2.5 text-sm"
             >
               {savingNotifs ? 'Saving...' : 'Save Preferences'}
             </button>
@@ -349,7 +349,7 @@ export default function Settings() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    className="flex-1 py-2 rounded-xl bg-white/5 text-white text-sm font-medium hover:bg-white/10 transition-colors"
+                    className="btn-ghost flex-1 py-2 text-sm"
                   >
                     Cancel
                   </button>

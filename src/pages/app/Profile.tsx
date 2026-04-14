@@ -113,7 +113,7 @@ export default function Profile() {
         {!editing ? (
           <button
             onClick={() => setEditing(true)}
-            className="px-5 py-2 rounded-full border border-white/20 text-sm font-medium text-white hover:bg-white/5 transition-colors"
+            className="btn-ghost px-5 py-2 text-sm"
           >
             Edit Profile
           </button>
@@ -121,14 +121,14 @@ export default function Profile() {
           <div className="flex gap-2">
             <button
               onClick={handleCancel}
-              className="px-4 py-2 rounded-full border border-white/20 text-sm font-medium text-text-secondary hover:text-white transition-colors flex items-center gap-1"
+              className="btn-ghost px-4 py-2 text-sm gap-1"
             >
               <X className="w-4 h-4" /> Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-2 rounded-full bg-primary text-background text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1 disabled:opacity-50"
+              className="btn-gold px-5 py-2 text-sm gap-1"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Saving...' : 'Save'}
@@ -170,7 +170,7 @@ export default function Profile() {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary/50 transition-all text-lg font-medium mb-2"
+                className="input-field text-lg font-medium mb-2"
                 placeholder="Your full name"
               />
             ) : (
@@ -191,7 +191,7 @@ export default function Profile() {
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all resize-none min-h-[80px]"
+              className="input-field resize-none min-h-[80px]"
               placeholder="Tell your pod about yourself..."
             />
           ) : (
@@ -217,7 +217,7 @@ export default function Profile() {
             <select
               value={lifeChapter}
               onChange={(e) => setLifeChapter(e.target.value)}
-              className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all appearance-none"
+              className="input-field appearance-none"
             >
               {chapters.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -237,7 +237,7 @@ export default function Profile() {
             <textarea
               value={goalStatement}
               onChange={(e) => setGoalStatement(e.target.value)}
-              className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all resize-none min-h-[80px]"
+              className="input-field resize-none min-h-[80px]"
               placeholder="What does success look like in 30 days?"
             />
           ) : (

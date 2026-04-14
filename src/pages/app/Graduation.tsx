@@ -229,14 +229,14 @@ export default function Graduation() {
           <button
             onClick={handleStartNewMission}
             disabled={resetting}
-            className="w-full py-4 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            className="btn-primary w-full gap-2"
           >
             <RotateCcw className="w-4 h-4" />
             {resetting ? 'Starting...' : 'Start a New Mission'}
           </button>
           <button
             onClick={() => navigate('/app')}
-            className="w-full py-4 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+            className="btn-ghost w-full gap-2"
           >
             Back to Dashboard
             <ArrowRight className="w-4 h-4" />
