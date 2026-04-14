@@ -1,0 +1,11 @@
+{
+  "model": "openai/gpt-oss-20b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "say hi"
+    }
+  ],
+  "max_tokens": 50,
+  "stream": false
+}

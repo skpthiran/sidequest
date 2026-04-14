@@ -106,22 +106,27 @@ YOUR ROLE:
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach`,
+        'https://api.groq.com/openai/v1/chat/completions',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
           },
           body: JSON.stringify({
-            systemPrompt,
-            messages: [{ role: 'user', content: prompt }],
+            model: 'llama-3.1-8b-instant',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 300,
+            temperature: 0.7
           }),
         }
       );
 
       const data = await response.json();
-      const text = data.text || 'Unable to generate insight right now.';
+      const text = data.choices?.[0]?.message?.content || 'Unable to generate insight right now.';
       setWeeklyInsight(text);
       setInsightLoaded(true);
     } catch {
@@ -145,25 +150,30 @@ YOUR ROLE:
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach`,
+        'https://api.groq.com/openai/v1/chat/completions',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
           },
           body: JSON.stringify({
-            systemPrompt,
-            messages: newMessages.map(m => ({ 
-              role: m.role, 
-              content: m.content 
-            })),
+            model: 'llama-3.1-8b-instant',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...newMessages.map(m => ({ 
+                role: m.role, 
+                content: m.content 
+              })),
+            ],
+            max_tokens: 300,
+            temperature: 0.7
           }),
         }
       );
 
       const data = await response.json();
-      const text = data.text || 'I could not generate a response. Try again.';
+      const text = data.choices?.[0]?.message?.content || 'I could not generate a response. Try again.';
       setMessages([...newMessages, { role: 'assistant', content: text }]);
     } catch {
       setMessages([...newMessages, {
