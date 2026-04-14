@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,6 +26,8 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Editable fields
   const [fullName, setFullName] = useState('');
@@ -94,6 +96,29 @@ export default function Profile() {
     setError(null);
   }
 
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path);
+      await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id);
+      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : prev);
+    } catch (err: any) {
+      setError(err.message || 'Avatar upload failed');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   const avatarUrl = profile?.avatar_url ||
     `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'SQ'}`;
 
@@ -159,10 +184,23 @@ export default function Profile() {
               className="w-20 h-20 rounded-full border-2 border-white/10 object-cover"
             />
             {editing && (
-              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center cursor-pointer">
-                <Camera className="w-5 h-5 text-white" />
+              <div
+                className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadingAvatar
+                  ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <Camera className="w-5 h-5 text-white" />
+                }
               </div>
             )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
           </div>
           <div className="flex-1">
             {editing ? (
