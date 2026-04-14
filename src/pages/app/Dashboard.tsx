@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { motion } from 'motion/react';
 import { CheckCircle2, Flame, Target, BrainCircuit, ArrowRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,7 +16,9 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
+
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [checkedIn, setCheckedIn] = useState(false);
   const [reflection, setReflection] = useState('');
@@ -43,7 +47,13 @@ export default function Dashboard() {
     if (profileData) {
       setProfile(profileData);
       setStreakCount(profileData.streak_count);
+
+      if (profileData.streak_count >= 30) {
+        navigate('/app/graduation');
+        return;
+      }
     }
+
 
     // Check if already checked in today
     const today = new Date().toISOString().split('T')[0];
