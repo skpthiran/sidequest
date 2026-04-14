@@ -6,6 +6,7 @@ import { CheckCircle2, Flame, Target, BrainCircuit, ArrowRight, X } from 'lucide
 import { cn } from '@/lib/utils';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { getUserPod, getPodMembers } from '../../lib/podMatching';
 
 interface UserProfile {
   full_name: string;
@@ -28,6 +29,8 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [streakCount, setStreakCount] = useState(0);
+  const [podData, setPodData] = useState<any>(null);
+  const [podMembers, setPodMembers] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -65,6 +68,13 @@ export default function Dashboard() {
       .maybeSingle();
 
     if (checkInData) setCheckedIn(true);
+
+    const pod = await getUserPod(user!.id);
+    if (pod?.pod_id) {
+      setPodData(pod);
+      const members = await getPodMembers(pod.pod_id);
+      setPodMembers(members);
+    }
 
     setLoading(false);
   }
@@ -184,26 +194,50 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Pod Activity Placeholder */}
           <div className="glass-card p-6 rounded-3xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-medium text-white">Pod Activity</h3>
-              <button className="text-sm text-text-secondary hover:text-white transition-colors">
+              <button
+                onClick={() => navigate('/app/pod')}
+                className="text-sm text-text-secondary hover:text-white transition-colors"
+              >
                 View All
               </button>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-surface border border-white/5">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Flame className="w-5 h-5 text-primary" />
+            <div className="space-y-3">
+              {podMembers.length === 0 ? (
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-surface border border-white/5">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Flame className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">Pod matching in progress</p>
+                    <p className="text-xs text-text-secondary">
+                      You'll be matched with 4–7 peers starting the same chapter.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">Pod matching in progress</p>
-                  <p className="text-xs text-text-secondary">
-                    You'll be matched with 4–7 peers starting the same chapter.
-                  </p>
-                </div>
-              </div>
+              ) : (
+                podMembers.map((member: any) => {
+                  const u = member.users;
+                  const name = u?.full_name?.split(' ')[0] || 'Quester';
+                  const initials = u?.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?';
+                  const avatarUrl = u?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u?.full_name || 'Q')}`;
+                  return (
+                    <div key={member.user_id} className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-white/5">
+                      <img src={avatarUrl} alt={name} className="w-9 h-9 rounded-full object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{name}</p>
+                        <p className="text-xs text-text-secondary">{u?.streak_count || 0} day streak</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-accent-amber">
+                        <Flame className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{u?.streak_count || 0}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -222,8 +256,11 @@ export default function Dashboard() {
               Keep building your streak. The AI Coach unlocks after your first 3 check-ins 
               to give you personalised insights.
             </p>
-            <button className="text-sm text-primary hover:text-white transition-colors flex items-center gap-1 font-medium">
-              Coming soon <ArrowRight className="w-4 h-4" />
+            <button
+              onClick={() => navigate('/app/coach')}
+              className="text-sm text-primary hover:text-white transition-colors flex items-center gap-1 font-medium"
+            >
+              Open AI Coach <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
