@@ -110,7 +110,7 @@ export default function Discover() {
             {hasPod ? (
               <button
                 onClick={() => navigate('/app/pod')}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium"
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_0_20px_rgba(52,211,153,0.15)] active:scale-95 transition-all duration-200"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 View Your Pod
@@ -119,7 +119,7 @@ export default function Discover() {
               <button
                 onClick={handleJoinPod}
                 disabled={joining}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="btn-primary gap-2 disabled:opacity-50"
               >
                 <Zap className="w-4 h-4" />
                 {joining ? 'Matching...' : 'Join a Pod Now'}
@@ -145,7 +145,7 @@ export default function Discover() {
                   "glass-card p-6 rounded-2xl border transition-all",
                   isYours
                     ? "border-primary/30 bg-primary/5"
-                    : "border-white/5 hover:border-white/20"
+                    : "border-white/5 hover:border-white/20 hover:bg-white/[0.02] active:scale-[0.98] transition-all duration-200"
                 )}
               >
                 <div className="text-3xl mb-3">{chapter.emoji}</div>
