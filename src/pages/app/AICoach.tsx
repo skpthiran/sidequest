@@ -328,13 +328,22 @@ YOUR ROLE:
           {/* Input */}
           <div className="p-6 border-t border-white/5">
             <div className="flex gap-3">
-              <input
-                type="text"
+              <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
                 placeholder="Ask your coach anything..."
-                className="input-field"
+                rows={1}
+                className="input-field resize-none overflow-hidden min-h-[48px] max-h-[160px]"
               />
               <button
                 onClick={sendMessage}
