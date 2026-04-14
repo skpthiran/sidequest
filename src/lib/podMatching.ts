@@ -10,14 +10,17 @@ export async function getOrCreatePod(userId: string, lifeChapter: string): Promi
 
   if (existing?.pod_id) return existing.pod_id;
 
-  // Find an active pod with same chapter that has room
-  const { data: availablePod } = await supabase
+  // Find an active pod with same chapter that has room (check actual member count)
+  const { data: candidatePods } = await supabase
     .from('pods')
-    .select('id, pod_members(count)')
+    .select('id, max_members, pod_members(count)')
     .eq('life_chapter', lifeChapter)
-    .eq('is_active', true)
-    .lt('max_members', 9)
-    .maybeSingle();
+    .eq('is_active', true);
+
+  const availablePod = candidatePods?.find((pod) => {
+    const memberCount = (pod.pod_members as unknown as { count: number }[])[0]?.count ?? 0;
+    return memberCount < pod.max_members;
+  });
 
   if (availablePod) {
     await supabase.from('pod_members').insert({
