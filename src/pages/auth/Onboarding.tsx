@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
@@ -21,14 +21,26 @@ const timezones = [
 ];
 
 export default function Onboarding() {
-  const navigate = useNavigate();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedChapter, setSelectedChapter] = useState('');
   const [goalStatement, setGoalStatement] = useState('');
   const [timezone, setTimezone] = useState('UTC');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('users')
+      .select('is_onboarded')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.is_onboarded) navigate('/app', { replace: true });
+      });
+  }, [user, navigate]);
 
   const handleNext = async () => {
     if (step < 3) {
