@@ -19,7 +19,7 @@ const bottomNavItems = [
   { to: '/app/pod', label: 'Pod', icon: Users },
   { to: '/app/progress', label: 'Progress', icon: TrendingUp },
   { to: '/app/discover', label: 'Discover', icon: Compass },
-  { to: '/app/profile', label: 'Profile', icon: User },
+  { to: '/app/settings', label: 'Settings', icon: Settings, end: false },
 ];
 
 export default function AppLayout() {
