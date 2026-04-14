@@ -80,7 +80,7 @@ export default function Graduation() {
       .update({
         streak_count: 0,
         is_onboarded: false,
-        life_chapter: 'general',
+        life_chapter: null,
         goal_statement: null,
       })
       .eq('id', user.id);

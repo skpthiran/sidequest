@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Shield, Target, Users, Zap, CheckCircle2, Lock, BrainCircuit, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function LandingPage() {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -38,9 +40,9 @@ export default function LandingPage() {
                   Join a Mission
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link to="#how-it-works" className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/5 text-white border border-white/10 font-medium text-base hover:bg-white/10 transition-colors flex items-center justify-center">
+                <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/5 text-white border border-white/10 font-medium text-base hover:bg-white/10 transition-colors flex items-center justify-center">
                   How it Works
-                </Link>
+                </button>
               </div>
             </motion.div>
           </div>
@@ -151,9 +153,9 @@ export default function LandingPage() {
                 We match you with peers who are in the exact same season of life. Same goals, same struggles, same timezone.
               </p>
             </div>
-            <Link to="#how-it-works" className="text-primary hover:text-white transition-colors flex items-center gap-2 font-medium">
+            <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="text-primary hover:text-white transition-colors flex items-center gap-2 font-medium">
               View all chapters <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
