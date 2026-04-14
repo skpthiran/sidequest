@@ -1,5 +1,22 @@
 import { supabase } from './supabase';
 
+function getUtcOffsetHours(timezone: string): number {
+  try {
+    const now = new Date();
+    const utcStr = now.toLocaleString('en-US', { timeZone: 'UTC' });
+    const tzStr = now.toLocaleString('en-US', { timeZone: timezone });
+    const diff = (new Date(tzStr).getTime() - new Date(utcStr).getTime()) / (1000 * 60 * 60);
+    return diff;
+  } catch {
+    return 0;
+  }
+}
+
+function timezoneCompatible(tz1: string, tz2: string): boolean {
+  const diff = Math.abs(getUtcOffsetHours(tz1) - getUtcOffsetHours(tz2));
+  return diff <= 3;
+}
+
 export async function getOrCreatePod(userId: string, lifeChapter: string): Promise<string | null> {
   // Check if user already has a pod
   const { data: existing } = await supabase
@@ -7,28 +24,57 @@ export async function getOrCreatePod(userId: string, lifeChapter: string): Promi
     .select('pod_id')
     .eq('user_id', userId)
     .maybeSingle();
-
   if (existing?.pod_id) return existing.pod_id;
 
-  // Find an active pod with same chapter that has room (check actual member count)
+  // Get user's timezone
+  const { data: userData } = await supabase
+    .from('users')
+    .select('timezone')
+    .eq('id', userId)
+    .single();
+  const userTimezone = userData?.timezone || 'UTC';
+
+  // Find candidate pods with same chapter that have room
   const { data: candidatePods } = await supabase
     .from('pods')
-    .select('id, max_members, pod_members(count)')
+    .select(`
+      id,
+      max_members,
+      pod_members (
+        count,
+        users ( timezone )
+      )
+    `)
     .eq('life_chapter', lifeChapter)
     .eq('is_active', true);
 
-  const availablePod = candidatePods?.find((pod) => {
+  const openPods = (candidatePods || []).filter((pod) => {
     const memberCount = (pod.pod_members as unknown as { count: number }[])[0]?.count ?? 0;
     return memberCount < pod.max_members;
   });
 
-  if (availablePod) {
+  // Score each pod by timezone compatibility
+  let bestPod: any = null;
+  let bestScore = -1;
+
+  for (const pod of openPods) {
+    const members = pod.pod_members as unknown as { users: { timezone: string } | null }[];
+    const timezones = members.map((m) => m.users?.timezone || 'UTC');
+    const compatibleCount = timezones.filter((tz) => timezoneCompatible(tz, userTimezone)).length;
+    const score = timezones.length === 0 ? 1 : compatibleCount / timezones.length;
+    if (score > bestScore) {
+      bestScore = score;
+      bestPod = pod;
+    }
+  }
+
+  if (bestPod) {
     await supabase.from('pod_members').insert({
-      pod_id: availablePod.id,
+      pod_id: bestPod.id,
       user_id: userId,
       role: 'member',
     });
-    return availablePod.id;
+    return bestPod.id;
   }
 
   // Create a new pod
@@ -45,7 +91,6 @@ export async function getOrCreatePod(userId: string, lifeChapter: string): Promi
     })
     .select()
     .single();
-
   if (!newPod) return null;
 
   await supabase.from('pod_members').insert({
@@ -53,7 +98,6 @@ export async function getOrCreatePod(userId: string, lifeChapter: string): Promi
     user_id: userId,
     role: 'leader',
   });
-
   return newPod.id;
 }
 
@@ -75,7 +119,6 @@ export async function getUserPod(userId: string) {
     `)
     .eq('user_id', userId)
     .maybeSingle();
-
   return data;
 }
 
@@ -96,7 +139,6 @@ export async function getPodMembers(podId: string) {
       )
     `)
     .eq('pod_id', podId);
-
   return data || [];
 }
 
@@ -119,6 +161,5 @@ export async function getPodCheckIns(podId: string) {
     .eq('pod_id', podId)
     .order('created_at', { ascending: false })
     .limit(20);
-
   return data || [];
 }
