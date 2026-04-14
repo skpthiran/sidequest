@@ -161,7 +161,7 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           <Outlet />
         </div>
       </main>

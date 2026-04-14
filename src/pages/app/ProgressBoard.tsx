@@ -63,9 +63,7 @@ export default function ProgressBoard() {
         const history: (boolean | null)[] = Array.from({ length: 30 }, (_, i) => {
           const day = new Date(start);
           day.setDate(start.getDate() + i);
-
           if (day > today) return null;
-
           const dateStr = day.toISOString().split('T')[0];
           return checkedDates.has(dateStr);
         });
@@ -80,7 +78,6 @@ export default function ProgressBoard() {
       })
     );
 
-    // Sort: current user first
     memberProgressList.sort((a, b) => {
       if (a.user_id === user!.id) return -1;
       if (b.user_id === user!.id) return 1;
@@ -136,27 +133,32 @@ export default function ProgressBoard() {
   }
 
   return (
-    <div className="space-y-8 pb-20 md:pb-0">
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+    <div className="space-y-6 pb-20 md:pb-0">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
         <div>
           <h1 className="font-serif text-3xl text-white mb-2">Progress Board</h1>
           <p className="text-text-secondary">Track the pod's consistency over 30 days.</p>
         </div>
-        <div className="flex gap-4">
-          <div className="glass-card px-4 py-2 rounded-xl text-center">
+        <div className="flex gap-3">
+          <div className="glass-card px-4 py-3 rounded-xl text-center flex-1">
             <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Pod Average</p>
             <p className="text-lg font-serif text-white">{podAverage}%</p>
           </div>
-          <div className="glass-card px-4 py-2 rounded-xl text-center border-primary/20">
+          <div className="glass-card px-4 py-3 rounded-xl text-center flex-1 border-primary/20">
             <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Top Streak</p>
             <p className="text-lg font-serif text-primary">{topStreak} Days</p>
+          </div>
+          <div className="glass-card px-4 py-3 rounded-xl text-center flex-1">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Day</p>
+            <p className="text-lg font-serif text-white">{currentDay}/30</p>
           </div>
         </div>
       </div>
 
-      <div className="glass-card rounded-3xl overflow-hidden overflow-x-auto">
+      {/* Desktop Grid View */}
+      <div className="hidden md:block glass-card rounded-3xl overflow-hidden overflow-x-auto">
         <div className="min-w-[800px] p-6">
-          {/* Header Row */}
           <div className="flex items-end mb-6">
             <div className="w-48 shrink-0 pb-2">
               <span className="text-xs font-medium text-text-secondary uppercase tracking-wider">
@@ -182,7 +184,6 @@ export default function ProgressBoard() {
             </div>
           </div>
 
-          {/* Member Rows */}
           <div className="space-y-4">
             {members.map((member) => {
               const isMe = member.user_id === user?.id;
@@ -219,9 +220,7 @@ export default function ProgressBoard() {
                     ))}
                   </div>
                   <div className="w-24 shrink-0 text-right flex items-center justify-end gap-2">
-                    <span className="text-sm font-serif text-white">
-                      {member.streak_count}
-                    </span>
+                    <span className="text-sm font-serif text-white">{member.streak_count}</span>
                     <TrendingUp className={cn(
                       "w-3 h-3",
                       member.streak_count > 0 ? "text-emerald-500" : "text-text-muted"
@@ -232,6 +231,87 @@ export default function ProgressBoard() {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {members.map((member) => {
+          const isMe = member.user_id === user?.id;
+          const completed = member.history.filter(h => h === true).length;
+          const total = member.history.filter(h => h !== null).length;
+          const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+          return (
+            <div
+              key={member.user_id}
+              className={cn(
+                "glass-card p-5 rounded-2xl",
+                isMe && "border-primary/20"
+              )}
+            >
+              {/* Member Info */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={getAvatar(member.full_name, member.avatar_url)}
+                    className="w-10 h-10 rounded-full border border-white/10 object-cover"
+                    alt={member.full_name}
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      {isMe ? 'You' : member.full_name.split(' ')[0]}
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      {member.streak_count} day streak
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-serif text-white">{pct}%</p>
+                  <p className="text-xs text-text-muted">consistency</p>
+                </div>
+              </div>
+
+              {/* Mini dot grid — last 14 days only on mobile */}
+              <div>
+                <p className="text-xs text-text-muted mb-2">Last 14 days</p>
+                <div className="flex gap-1.5">
+                  {member.history.slice(-14).map((status, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex-1 h-6 rounded-sm",
+                        status === true
+                          ? "bg-primary/80"
+                          : status === false
+                          ? "bg-accent-rose/40"
+                          : "bg-surface border border-white/10"
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-[10px] text-text-muted">14 days ago</span>
+                  <span className="text-[10px] text-text-muted">Today</span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="mt-4">
+                <div className="flex justify-between text-xs text-text-muted mb-1">
+                  <span>Mission progress</span>
+                  <span>{completed}/{total} days</span>
+                </div>
+                <div className="h-1.5 bg-surface rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary/70 rounded-full transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
