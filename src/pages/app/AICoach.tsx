@@ -106,13 +106,12 @@ YOUR ROLE:
 
     try {
       const response = await fetch(
-        'https://api.groq.com/openai/v1/chat/completions',
+        'https://sidequest-groq-proxy.skpthiran.workers.dev',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-          },
+                      },
           body: JSON.stringify({
             model: 'llama-3.1-8b-instant',
             messages: [
@@ -150,13 +149,12 @@ YOUR ROLE:
 
     try {
       const response = await fetch(
-        'https://api.groq.com/openai/v1/chat/completions',
+        'https://sidequest-groq-proxy.skpthiran.workers.dev',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-          },
+                      },
           body: JSON.stringify({
             model: 'llama-3.1-8b-instant',
             messages: [
