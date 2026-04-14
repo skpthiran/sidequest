@@ -376,12 +376,17 @@ export default function Dashboard() {
                 />
               </div>
 
+              {reflection.trim().length === 0 && (
+                <p className="text-xs text-text-secondary text-center -mb-1">
+                  💡 Add a reflection to get the most out of your check-in
+                </p>
+              )}
               <button
                 onClick={handleSubmitCheckIn}
                 disabled={saving}
                 className="btn-primary w-full"
               >
-                {saving ? 'Saving...' : 'Submit Check-in'}
+                {saving ? 'Saving...' : reflection.trim().length === 0 ? 'Submit Without Reflection' : 'Submit Check-in'}
               </button>
             </div>
           </motion.div>
