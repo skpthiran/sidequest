@@ -15,9 +15,9 @@ export default function PublicLayout() {
           </Link>
           
           <nav className="hidden md:flex items-center gap-8">
-            <Link to="/#chapters" className="text-sm font-medium text-text-secondary hover:text-white transition-colors">Chapters</Link>
-            <Link to="/#how-it-works" className="text-sm font-medium text-text-secondary hover:text-white transition-colors">How it Works</Link>
-            <Link to="/#pricing" className="text-sm font-medium text-text-secondary hover:text-white transition-colors">Pricing</Link>
+            <a onClick={() => document.getElementById('chapters')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-text-secondary hover:text-white transition-colors cursor-pointer">Chapters</a>
+            <a onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-text-secondary hover:text-white transition-colors cursor-pointer">How it Works</a>
+            <a onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-text-secondary hover:text-white transition-colors cursor-pointer">Pricing</a>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -52,9 +52,9 @@ export default function PublicLayout() {
           <div>
             <h4 className="font-medium text-white mb-4 text-sm uppercase tracking-wider">Platform</h4>
             <ul className="space-y-3">
-              <li><Link to="/#chapters" className="text-sm text-text-secondary hover:text-white transition-colors">Chapters</Link></li>
-              <li><Link to="/#pricing" className="text-sm text-text-secondary hover:text-white transition-colors">Pricing</Link></li>
-              <li><Link to="/#how-it-works" className="text-sm text-text-secondary hover:text-white transition-colors">How it Works</Link></li>
+              <li><a onClick={() => document.getElementById('chapters')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-text-secondary hover:text-white transition-colors cursor-pointer">Chapters</a></li>
+              <li><a onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-text-secondary hover:text-white transition-colors cursor-pointer">Pricing</a></li>
+              <li><a onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-text-secondary hover:text-white transition-colors cursor-pointer">How it Works</a></li>
             </ul>
           </div>
 
