@@ -1,6 +1,162 @@
-import { Shield, Bell, Lock, CreditCard, LogOut } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Shield, Bell, Lock, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
+import { signOut } from '../../lib/auth';
+
+const timezones = [
+  { label: "Pacific Time (PT)", value: "America/Los_Angeles" },
+  { label: "Eastern Time (ET)", value: "America/New_York" },
+  { label: "Greenwich Mean Time (GMT)", value: "UTC" },
+  { label: "Central European Time (CET)", value: "Europe/Paris" },
+  { label: "India Standard Time (IST)", value: "Asia/Kolkata" },
+  { label: "Singapore Time (SGT)", value: "Asia/Singapore" },
+];
 
 export default function Settings() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Account state
+  const [timezone, setTimezone] = useState('UTC');
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [accountSuccess, setAccountSuccess] = useState(false);
+  const [accountError, setAccountError] = useState<string | null>(null);
+
+  // Password state
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Notification prefs state
+  const [notifCheckIn, setNotifCheckIn] = useState(true);
+  const [notifPodActivity, setNotifPodActivity] = useState(true);
+  const [notifAIInsights, setNotifAIInsights] = useState(true);
+  const [savingNotifs, setSavingNotifs] = useState(false);
+  const [notifSuccess, setNotifSuccess] = useState(false);
+
+  // Danger zone
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    loadSettings();
+  }, [user]);
+
+  async function loadSettings() {
+    const { data } = await supabase
+      .from('users')
+      .select('timezone, notif_check_in, notif_pod_activity, notif_ai_insights')
+      .eq('id', user!.id)
+      .single();
+
+    if (data) {
+      setTimezone(data.timezone || 'UTC');
+      setNotifCheckIn(data.notif_check_in ?? true);
+      setNotifPodActivity(data.notif_pod_activity ?? true);
+      setNotifAIInsights(data.notif_ai_insights ?? true);
+    }
+  }
+
+  async function handleSaveAccount() {
+    if (!user) return;
+    setSavingAccount(true);
+    setAccountError(null);
+
+    const { error } = await supabase
+      .from('users')
+      .update({ timezone })
+      .eq('id', user.id);
+
+    if (error) {
+      setAccountError(error.message);
+    } else {
+      setAccountSuccess(true);
+      setTimeout(() => setAccountSuccess(false), 3000);
+    }
+    setSavingAccount(false);
+  }
+
+  async function handleChangePassword() {
+    if (!user) return;
+    setPasswordError(null);
+
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+
+    setSavingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      setPasswordError(error.message);
+    } else {
+      setPasswordSuccess(true);
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    }
+    setSavingPassword(false);
+  }
+
+  async function handleSaveNotifs() {
+    if (!user) return;
+    setSavingNotifs(true);
+
+    await supabase
+      .from('users')
+      .update({
+        notif_check_in: notifCheckIn,
+        notif_pod_activity: notifPodActivity,
+        notif_ai_insights: notifAIInsights,
+      })
+      .eq('id', user.id);
+
+    setNotifSuccess(true);
+    setTimeout(() => setNotifSuccess(false), 3000);
+    setSavingNotifs(false);
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    navigate('/login');
+  }
+
+  async function handleDeleteAccount() {
+    if (!confirmDelete || !user) return;
+    setDeleting(true);
+    // Sign out — full account deletion requires server-side admin API
+    // For now we clear their data and sign them out
+    await supabase.from('pod_members').delete().eq('user_id', user.id);
+    await supabase.from('check_ins').delete().eq('user_id', user.id);
+    await supabase.from('messages').delete().eq('sender_id', user.id);
+    await supabase.from('users').delete().eq('id', user.id);
+    await signOut();
+    navigate('/login');
+  }
+
+  const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+    <button
+      onClick={() => onChange(!value)}
+      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${
+        value ? 'bg-primary/40 border border-primary/60' : 'bg-white/10 border border-white/20'
+      }`}
+    >
+      <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-200 ${
+        value ? 'right-1 bg-primary' : 'left-1 bg-white/40'
+      }`} />
+    </button>
+  );
+
   return (
     <div className="space-y-8 pb-20 md:pb-0 max-w-3xl mx-auto">
       <div>
@@ -17,22 +173,94 @@ export default function Settings() {
           </div>
           <div className="p-6 space-y-6">
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">Email Address</label>
-              <input 
-                type="email" 
-                defaultValue="alex@example.com"
-                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+              <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={user?.email || ''}
+                disabled
+                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-text-secondary focus:outline-none transition-all opacity-60 cursor-not-allowed"
+              />
+              <p className="text-xs text-text-muted mt-1">Email cannot be changed.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">
+                Timezone
+              </label>
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all appearance-none"
+              >
+                {timezones.map((tz) => (
+                  <option key={tz.value} value={tz.value}>{tz.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {accountError && (
+              <p className="text-sm text-red-400">{accountError}</p>
+            )}
+            {accountSuccess && (
+              <p className="text-sm text-emerald-400">✓ Settings saved</p>
+            )}
+
+            <button
+              onClick={handleSaveAccount}
+              disabled={savingAccount}
+              className="px-6 py-2.5 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors text-sm disabled:opacity-50"
+            >
+              {savingAccount ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+
+        {/* Change Password */}
+        <div className="glass-card rounded-3xl overflow-hidden">
+          <div className="p-6 border-b border-white/5 flex items-center gap-3">
+            <Lock className="w-5 h-5 text-white" />
+            <h2 className="text-lg font-medium text-white">Change Password</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Min. 8 characters"
+                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">Timezone</label>
-              <select className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all appearance-none">
-                <option>Pacific Time (PT)</option>
-                <option>Eastern Time (ET)</option>
-              </select>
+              <label className="block text-sm font-medium text-text-secondary mb-2 uppercase tracking-wider">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repeat new password"
+                className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all"
+              />
             </div>
-            <button className="px-6 py-2.5 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors text-sm">
-              Save Changes
+
+            {passwordError && (
+              <p className="text-sm text-red-400">{passwordError}</p>
+            )}
+            {passwordSuccess && (
+              <p className="text-sm text-emerald-400">✓ Password updated successfully</p>
+            )}
+
+            <button
+              onClick={handleChangePassword}
+              disabled={savingPassword || !newPassword}
+              className="px-6 py-2.5 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors text-sm disabled:opacity-50"
+            >
+              {savingPassword ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </div>
@@ -45,37 +273,96 @@ export default function Settings() {
           </div>
           <div className="p-6 space-y-4">
             {[
-              { title: "Daily Check-in Reminder", desc: "Get notified 2 hours before midnight." },
-              { title: "Pod Activity", desc: "When someone in your pod checks in or posts." },
-              { title: "AI Coach Insights", desc: "Weekly recaps and momentum warnings." }
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2">
+              {
+                title: "Daily Check-in Reminder",
+                desc: "Get notified 2 hours before midnight.",
+                value: notifCheckIn,
+                onChange: setNotifCheckIn,
+              },
+              {
+                title: "Pod Activity",
+                desc: "When someone in your pod checks in or posts.",
+                value: notifPodActivity,
+                onChange: setNotifPodActivity,
+              },
+              {
+                title: "AI Coach Insights",
+                desc: "Weekly recaps and momentum warnings.",
+                value: notifAIInsights,
+                onChange: setNotifAIInsights,
+              },
+            ].map((item) => (
+              <div key={item.title} className="flex items-center justify-between py-2">
                 <div>
                   <p className="font-medium text-white">{item.title}</p>
                   <p className="text-sm text-text-secondary">{item.desc}</p>
                 </div>
-                <div className="w-12 h-6 rounded-full bg-primary/20 relative cursor-pointer">
-                  <div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-primary" />
-                </div>
+                <Toggle value={item.value} onChange={item.onChange} />
               </div>
             ))}
+
+            {notifSuccess && (
+              <p className="text-sm text-emerald-400">✓ Notification preferences saved</p>
+            )}
+
+            <button
+              onClick={handleSaveNotifs}
+              disabled={savingNotifs}
+              className="px-6 py-2.5 rounded-full bg-white/5 text-white font-medium hover:bg-white/10 transition-colors text-sm disabled:opacity-50"
+            >
+              {savingNotifs ? 'Saving...' : 'Save Preferences'}
+            </button>
           </div>
         </div>
 
         {/* Danger Zone */}
-        <div className="glass-card rounded-3xl overflow-hidden border-accent-rose/20">
+        <div className="glass-card rounded-3xl overflow-hidden border-red-500/20">
           <div className="p-6 border-b border-white/5 flex items-center gap-3">
-            <Lock className="w-5 h-5 text-accent-rose" />
-            <h2 className="text-lg font-medium text-accent-rose">Danger Zone</h2>
+            <Lock className="w-5 h-5 text-red-400" />
+            <h2 className="text-lg font-medium text-red-400">Danger Zone</h2>
           </div>
           <div className="p-6 space-y-4">
-            <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface border border-white/5 hover:border-accent-rose/50 transition-colors group">
-              <span className="font-medium text-white group-hover:text-accent-rose transition-colors">Sign Out</span>
-              <LogOut className="w-5 h-5 text-text-muted group-hover:text-accent-rose transition-colors" />
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface border border-white/5 hover:border-red-500/50 transition-colors group"
+            >
+              <span className="font-medium text-white group-hover:text-red-400 transition-colors">
+                Sign Out
+              </span>
+              <LogOut className="w-5 h-5 text-text-muted group-hover:text-red-400 transition-colors" />
             </button>
-            <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface border border-white/5 hover:border-accent-rose/50 transition-colors group">
-              <span className="font-medium text-text-secondary group-hover:text-accent-rose transition-colors">Delete Account</span>
-            </button>
+
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface border border-white/5 hover:border-red-500/50 transition-colors group"
+              >
+                <span className="font-medium text-text-secondary group-hover:text-red-400 transition-colors">
+                  Delete Account
+                </span>
+              </button>
+            ) : (
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-3">
+                <p className="text-sm text-red-400 font-medium">
+                  Are you sure? This will delete all your data and cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 py-2 rounded-xl bg-white/5 text-white text-sm font-medium hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30 transition-colors border border-red-500/30 disabled:opacity-50"
+                  >
+                    {deleting ? 'Deleting...' : 'Yes, Delete Everything'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
