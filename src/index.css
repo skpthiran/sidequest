@@ -18,6 +18,10 @@
   --color-text-muted: #6B7280;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-text-primary);
