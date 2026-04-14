@@ -17,8 +17,8 @@ const navItems = [
 const bottomNavItems = [
   { to: '/app', label: 'Home', icon: Home, end: true },
   { to: '/app/pod', label: 'Pod', icon: Users },
-  { to: '/app/progress', label: 'Progress', icon: TrendingUp },
   { to: '/app/discover', label: 'Discover', icon: Compass },
+  { to: '/app/coach', label: 'Coach', icon: BrainCircuit, end: false },
   { to: '/app/settings', label: 'Settings', icon: Settings, end: false },
 ];
 
