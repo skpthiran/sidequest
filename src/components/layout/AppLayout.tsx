@@ -75,14 +75,8 @@ export default function AppLayout() {
               key={to}
               to={to}
               end={end}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all',
-                  isActive
-                    ? 'bg-white/10 text-white'
-                    : 'text-text-secondary hover:text-white hover:bg-white/5'
-                )
-              }
+              className={({ isActive }) => cn('nav-link', isActive && 'active')}
+
             >
               <Icon className="w-4 h-4" />
               {label}
@@ -93,35 +87,24 @@ export default function AppLayout() {
         <div className="space-y-1 pt-4 border-t border-white/5">
           <NavLink
             to="/app/profile"
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all',
-                isActive
-                  ? 'bg-white/10 text-white'
-                  : 'text-text-secondary hover:text-white hover:bg-white/5'
-              )
-            }
+            className={({ isActive }) => cn('nav-link', isActive && 'active')}
+
           >
             <User className="w-4 h-4" />
             Profile
           </NavLink>
           <NavLink
             to="/app/settings"
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all',
-                isActive
-                  ? 'bg-white/10 text-white'
-                  : 'text-text-secondary hover:text-white hover:bg-white/5'
-              )
-            }
+            className={({ isActive }) => cn('nav-link', isActive && 'active')}
+
           >
             <Settings className="w-4 h-4" />
             Settings
           </NavLink>
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-all"
+            className="nav-link w-full"
+
           >
             <LogOut className="w-4 h-4" />
             Sign Out
@@ -174,12 +157,8 @@ export default function AppLayout() {
               key={to}
               to={to}
               end={end}
-              className={({ isActive }) =>
-                cn(
-                  'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all',
-                  isActive ? 'text-white' : 'text-text-muted'
-                )
-              }
+              className={({ isActive }) => cn('bottom-nav-item', isActive && 'active')}
+
             >
               <Icon className="w-5 h-5" />
               <span className="text-[10px] font-medium">{label}</span>
