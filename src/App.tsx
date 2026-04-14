@@ -15,6 +15,7 @@ import Discover from './pages/app/Discover';
 import Profile from './pages/app/Profile';
 import Settings from './pages/app/Settings';
 import Graduation from './pages/app/Graduation';
+import PWAInstallPrompt from './components/shared/PWAInstallPrompt';
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
+      <PWAInstallPrompt />
     </AuthProvider>
   );
 }
