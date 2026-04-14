@@ -5,6 +5,8 @@ import { motion } from 'motion/react';
 import { CheckCircle2, Flame, Target, BrainCircuit, ArrowRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '../../lib/supabase';
+import { createInvite } from '../../lib/invites';
+
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserPod, getPodMembers } from '../../lib/podMatching';
 
@@ -31,13 +33,39 @@ export default function Dashboard() {
   const [streakCount, setStreakCount] = useState(0);
   const [podData, setPodData] = useState<any>(null);
   const [podMembers, setPodMembers] = useState<any[]>([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+
 
   useEffect(() => {
     if (!user) return;
     loadDashboardData();
   }, [user]);
 
+  async function handleGenerateInvite() {
+    if (!user || !podData?.pod_id) return;
+    setInviteLoading(true);
+    try {
+      const link = await createInvite(podData.pod_id, user.id);
+      setInviteLink(link);
+      setShowInviteModal(true);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setInviteLoading(false);
+    }
+  }
+
+  async function handleCopyInvite() {
+    await navigator.clipboard.writeText(inviteLink);
+    setInviteCopied(true);
+    setTimeout(() => setInviteCopied(false), 2000);
+  }
+
   async function loadDashboardData() {
+
     setLoading(true);
 
     // Load user profile
@@ -197,12 +225,22 @@ export default function Dashboard() {
           <div className="glass-card p-6 rounded-3xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-medium text-white">Pod Activity</h3>
-              <button
-                onClick={() => navigate('/app/pod')}
-                className="text-sm text-text-secondary hover:text-white transition-colors"
-              >
-                View All
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleGenerateInvite}
+                  disabled={inviteLoading || !podData?.pod_id}
+                  className="text-sm text-primary hover:text-primary/80 transition-colors disabled:opacity-40"
+                >
+                  {inviteLoading ? 'Generating...' : '+ Invite'}
+                </button>
+                <button
+                  onClick={() => navigate('/app/pod')}
+                  className="text-sm text-text-secondary hover:text-white transition-colors"
+                >
+                  View All
+                </button>
+              </div>
+
             </div>
             <div className="space-y-3">
               {podMembers.length === 0 ? (
@@ -392,6 +430,35 @@ export default function Dashboard() {
           </motion.div>
         </div>
       )}
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-card rounded-3xl p-8 max-w-sm w-full space-y-5">
+            <div className="text-center">
+              <div className="text-3xl mb-2">⚔️</div>
+              <h2 className="font-serif text-xl text-white">Invite to Your Pod</h2>
+              <p className="text-sm text-text-secondary mt-1">Share this link — it expires in 7 days</p>
+            </div>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
+              <p className="text-xs text-text-secondary truncate flex-1">{inviteLink}</p>
+            </div>
+            <button
+              onClick={handleCopyInvite}
+              className="btn-primary w-full py-3 rounded-full text-sm font-medium"
+            >
+              {inviteCopied ? '✅ Copied!' : 'Copy Invite Link'}
+            </button>
+            <button
+              onClick={() => setShowInviteModal(false)}
+              className="w-full text-sm text-text-muted hover:text-white transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
