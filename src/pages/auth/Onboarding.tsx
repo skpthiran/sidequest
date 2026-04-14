@@ -58,13 +58,14 @@ export default function Onboarding() {
 
     const { error } = await supabase
       .from('users')
-      .update({
+      .upsert({
+        id: user.id,
+        email: user.email,
         life_chapter: selectedChapter,
         goal_statement: goalStatement,
         timezone: timezone,
         is_onboarded: true,
-      })
-      .eq('id', user.id);
+      }, { onConflict: 'id' });
 
     if (error) {
       setError(error.message);
