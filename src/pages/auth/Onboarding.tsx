@@ -63,7 +63,6 @@ export default function Onboarding() {
       .from('users')
       .upsert({
         id: user.id,
-        email: user.email,
         full_name: fullName,
         life_chapter: selectedChapter,
         goal_statement: goalStatement,
