@@ -12,6 +12,7 @@ import {
   Compass,
   Flame,
   Heart,
+  Menu,
   MessageSquare,
   Moon,
   Plus,
@@ -166,7 +167,10 @@ const stats = [
   { label: 'DAILY STREAK', value: '87%' },
 ];
 
-const COUNTDOWN_DURATION_MS = (4 * 60 * 60 + 22 * 60 + 15) * 1000;
+const POD_DEPLOYMENT_INTERVAL = { hours: 4, minutes: 22, seconds: 15 } as const;
+const POD_DEPLOYMENT_INTERVAL_MS =
+  ((POD_DEPLOYMENT_INTERVAL.hours * 60 + POD_DEPLOYMENT_INTERVAL.minutes) * 60 + POD_DEPLOYMENT_INTERVAL.seconds) * 1000;
+const DEPLOYMENT_TIMESTAMP_STORAGE_KEY = 'sidequest-next-deployment-at';
 
 const squad = [
   { initials: 'LV', hue: 0 },
@@ -354,7 +358,7 @@ const Navbar = () => {
             onClick={() => setMobileMenuOpen(true)}
             aria-label="Open navigation menu"
           >
-            <div className="relative h-[2px] w-6 bg-white before:absolute before:-top-2 before:left-0 before:h-[2px] before:w-6 before:bg-white after:absolute after:top-2 after:left-0 after:h-[2px] after:w-6 after:bg-white" />
+            <Menu className="h-6 w-6" />
           </button>
         </div>
       </nav>
@@ -403,7 +407,7 @@ const Navbar = () => {
   );
 };
 
-const HeroSection = () => (
+const HeroSection = ({ missionWindowLabel }: { missionWindowLabel: string }) => (
   <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden pt-24">
     <div className="absolute inset-0">
       <div className="absolute bottom-0 left-0 right-0 h-[60vh] opacity-20">
@@ -471,7 +475,7 @@ const HeroSection = () => (
             <div>
               <h3 className="font-display text-2xl font-medium tracking-tight text-white/95">Physical Discipline</h3>
               <p className="text-sm font-medium tracking-wide text-white/40">
-                30 DAY MISSION • <span className="text-amber-400">MAY 2026</span>
+                30 DAY MISSION • <span className="text-amber-400">{missionWindowLabel}</span>
               </p>
             </div>
             <div className="flex -space-x-3">
@@ -784,8 +788,13 @@ const TimelineSection = () => (
           {journey.map((step, index) => (
             <div key={step.num}>
               <FadeIn delay={0.08}>
-              <div className={cn('flex flex-col items-center gap-12 md:flex-row', index % 2 === 1 && 'md:flex-row-reverse')}>
-                <div className={cn('w-full flex-1 text-center', index % 2 === 0 ? 'md:text-right' : 'md:text-left')}>
+              {(() => {
+                const isReversed = index % 2 === 1;
+                const textAlignment = isReversed ? 'md:text-left' : 'md:text-right';
+
+                return (
+                  <div className={cn('flex flex-col items-center gap-12 md:flex-row', isReversed && 'md:flex-row-reverse')}>
+                    <div className={cn('w-full flex-1 text-center', textAlignment)}>
                   <div className="mb-6 inline-block rounded-full border border-white/10 bg-white/5 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/40 transition-all hover:border-white hover:bg-white hover:text-black">
                     Phase {step.num}
                   </div>
@@ -793,15 +802,17 @@ const TimelineSection = () => (
                   <p className="text-lg font-light leading-relaxed text-white/40">{step.desc}</p>
                 </div>
 
-                <div className="relative z-10 flex-shrink-0">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/5 bg-[#050505] transition-all duration-700 hover:scale-110 hover:border-white/40 hover:shadow-[0_0_50px_rgba(255,255,255,0.1)]">
-                    <span className="text-2xl font-mono text-white/15">{step.num}</span>
-                  </div>
-                  <div className="pointer-events-none absolute inset-2 rounded-full border border-white/5 opacity-70" />
-                </div>
+                    <div className="relative z-10 flex-shrink-0">
+                      <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/5 bg-[#050505] transition-all duration-700 hover:scale-110 hover:border-white/40 hover:shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                        <span className="text-2xl font-mono text-white/15">{step.num}</span>
+                      </div>
+                      <div className="pointer-events-none absolute inset-2 rounded-full border border-white/5 opacity-70" />
+                    </div>
 
-                <div className="hidden flex-1 md:block" />
-              </div>
+                    <div className="hidden flex-1 md:block" />
+                  </div>
+                );
+              })()}
               </FadeIn>
             </div>
           ))}
@@ -1232,7 +1243,8 @@ const Footer = () => (
 );
 
 export default function LandingPage() {
-  const [countdown, setCountdown] = useState(() => formatCountdown(COUNTDOWN_DURATION_MS));
+  const missionWindowLabel = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date()).toUpperCase();
+  const [countdown, setCountdown] = useState(() => formatCountdown(POD_DEPLOYMENT_INTERVAL_MS));
 
   useEffect(() => {
     const header = document.querySelector('header');
@@ -1255,8 +1267,30 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    const deploymentAt = Date.now() + COUNTDOWN_DURATION_MS;
-    const updateCountdown = () => setCountdown(formatCountdown(deploymentAt - Date.now()));
+    const readStoredDeploymentAt = () => {
+      const storedValue = window.localStorage.getItem(DEPLOYMENT_TIMESTAMP_STORAGE_KEY);
+      const storedTimestamp = storedValue ? Number(storedValue) : Number.NaN;
+
+      if (Number.isFinite(storedTimestamp) && storedTimestamp > Date.now()) {
+        return storedTimestamp;
+      }
+
+      const nextDeploymentAt = Date.now() + POD_DEPLOYMENT_INTERVAL_MS;
+      window.localStorage.setItem(DEPLOYMENT_TIMESTAMP_STORAGE_KEY, String(nextDeploymentAt));
+      return nextDeploymentAt;
+    };
+
+    let deploymentAt = readStoredDeploymentAt();
+    const updateCountdown = () => {
+      const timeLeft = deploymentAt - Date.now();
+
+      if (timeLeft <= 0) {
+        deploymentAt = Date.now() + POD_DEPLOYMENT_INTERVAL_MS;
+        window.localStorage.setItem(DEPLOYMENT_TIMESTAMP_STORAGE_KEY, String(deploymentAt));
+      }
+
+      setCountdown(formatCountdown(deploymentAt - Date.now()));
+    };
 
     updateCountdown();
     const interval = window.setInterval(updateCountdown, 1000);
@@ -1268,7 +1302,7 @@ export default function LandingPage() {
     <div className="min-h-screen overflow-x-hidden bg-[#050505] font-sans text-white selection:bg-white/20">
       <Navbar />
       <main>
-        <HeroSection />
+        <HeroSection missionWindowLabel={missionWindowLabel} />
         <ProblemSection />
         <div id="chapters">
           <ChaptersSection />
