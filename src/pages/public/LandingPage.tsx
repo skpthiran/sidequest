@@ -166,6 +166,8 @@ const stats = [
   { label: 'DAILY STREAK', value: '87%' },
 ];
 
+const COUNTDOWN_DURATION_MS = (4 * 60 * 60 + 22 * 60 + 15) * 1000;
+
 const squad = [
   { initials: 'LV', hue: 0 },
   { initials: 'AN', hue: 35 },
@@ -206,6 +208,15 @@ const Button = ({ children, to, variant = 'primary', className = '', ...props }:
   );
 };
 
+const formatCountdown = (timeLeftMs: number) => {
+  const totalSeconds = Math.max(0, Math.floor(timeLeftMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':');
+};
+
 const FadeIn = ({ children, delay = 0, className = '' }: FadeInProps) => (
   <motion.div
     initial={{ opacity: 0, y: 32 }}
@@ -220,7 +231,7 @@ const FadeIn = ({ children, delay = 0, className = '' }: FadeInProps) => (
 
 const BackgroundParticles = () => (
   <div className="pointer-events-none absolute inset-0 overflow-hidden">
-    {Array.from({ length: 36 }).map((_, index) => (
+    {Array.from({ length: 18 }).map((_, index) => (
       <motion.span
         key={index}
         className="absolute rounded-full bg-white/30"
@@ -786,7 +797,7 @@ const TimelineSection = () => (
                   <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/5 bg-[#050505] transition-all duration-700 hover:scale-110 hover:border-white/40 hover:shadow-[0_0_50px_rgba(255,255,255,0.1)]">
                     <span className="text-2xl font-mono text-white/15">{step.num}</span>
                   </div>
-                  <div className="pointer-events-none absolute inset-0 rounded-full bg-white/5 opacity-20 animate-ping" />
+                  <div className="pointer-events-none absolute inset-2 rounded-full border border-white/5 opacity-70" />
                 </div>
 
                 <div className="hidden flex-1 md:block" />
@@ -966,7 +977,11 @@ const AICoachSection = () => (
               </div>
             </div>
 
-            <div className="pointer-events-none absolute bottom-[-100px] left-[-100px] h-64 w-64 rounded-full border border-violet-500/10 opacity-20 animate-ping" />
+            <motion.div
+              className="pointer-events-none absolute bottom-[-100px] left-[-100px] h-64 w-64 rounded-full border border-violet-500/10"
+              animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.08, 0.22, 0.08] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            />
           </div>
         </FadeIn>
 
@@ -1104,7 +1119,7 @@ const PricingSection = () => (
   </section>
 );
 
-const FinalCTA = () => (
+const FinalCTA = ({ countdown }: { countdown: string }) => (
   <section className="relative overflow-hidden bg-[#020202] py-32 md:py-64">
     <div className="pointer-events-none absolute inset-0 bg-grid-white opacity-[0.02]" />
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-indigo-500/10 via-transparent to-transparent" />
@@ -1127,7 +1142,9 @@ const FinalCTA = () => (
             View Quest Board
           </Button>
         </div>
-        <p className="mt-12 text-sm uppercase tracking-[0.2em] text-white/20">Next pod deployment in: <span className="text-white/60">04:22:15</span></p>
+        <p className="mt-12 text-sm uppercase tracking-[0.2em] text-white/20">
+          Next pod deployment in: <span className="text-white/60">{countdown}</span>
+        </p>
       </FadeIn>
     </div>
 
@@ -1215,6 +1232,8 @@ const Footer = () => (
 );
 
 export default function LandingPage() {
+  const [countdown, setCountdown] = useState(() => formatCountdown(COUNTDOWN_DURATION_MS));
+
   useEffect(() => {
     const header = document.querySelector('header');
     const footer = document.querySelector('footer');
@@ -1235,6 +1254,16 @@ export default function LandingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const deploymentAt = Date.now() + COUNTDOWN_DURATION_MS;
+    const updateCountdown = () => setCountdown(formatCountdown(deploymentAt - Date.now()));
+
+    updateCountdown();
+    const interval = window.setInterval(updateCountdown, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#050505] font-sans text-white selection:bg-white/20">
       <Navbar />
@@ -1253,7 +1282,7 @@ export default function LandingPage() {
         <div id="pricing">
           <PricingSection />
         </div>
-        <FinalCTA />
+        <FinalCTA countdown={countdown} />
       </main>
       <Footer />
     </div>
