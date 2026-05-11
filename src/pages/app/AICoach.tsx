@@ -105,27 +105,14 @@ YOUR ROLE:
     Keep it to 3-4 sentences.`;
 
     try {
-      const response = await fetch(
-        'https://sidequest-groq-proxy.skpthiran.workers.dev',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-                      },
-          body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: prompt }
-            ],
-            max_tokens: 300,
-            temperature: 0.7
-          }),
-        }
-      );
-
-      const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || 'Unable to generate insight right now.';
+      const { data, error } = await supabase.functions.invoke('ai-coach', {
+        body: {
+          systemPrompt,
+          messages: [{ role: 'user', content: prompt }],
+        },
+      });
+      if (error) throw error;
+      const text = data?.text || 'Unable to generate insight right now.';
       setWeeklyInsight(text);
       setInsightLoaded(true);
     } catch {
@@ -148,30 +135,17 @@ YOUR ROLE:
     const systemPrompt = buildSystemPrompt(userStats, checkInSummary, podSize);
 
     try {
-      const response = await fetch(
-        'https://sidequest-groq-proxy.skpthiran.workers.dev',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-                      },
-          body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...newMessages.map(m => ({ 
-                role: m.role, 
-                content: m.content 
-              })),
-            ],
-            max_tokens: 300,
-            temperature: 0.7
-          }),
-        }
-      );
-
-      const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || 'I could not generate a response. Try again.';
+      const { data, error } = await supabase.functions.invoke('ai-coach', {
+        body: {
+          systemPrompt,
+          messages: newMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        },
+      });
+      if (error) throw error;
+      const text = data?.text || 'I could not generate a response. Try again.';
       setMessages([...newMessages, { role: 'assistant', content: text }]);
     } catch {
       setMessages([...newMessages, {

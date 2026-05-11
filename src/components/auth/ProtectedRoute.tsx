@@ -19,8 +19,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       .select('is_onboarded')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => {
-        setIsOnboarded(data?.is_onboarded ?? false);
+      .then(({ data, error }) => {
+        if (error) {
+          setIsOnboarded(false);
+        } else {
+          setIsOnboarded(data?.is_onboarded ?? false);
+        }
         setChecking(false);
       });
   }, [user]);

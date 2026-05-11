@@ -121,7 +121,7 @@ export default function AppLayout() {
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
                 <div className="w-2 h-2 rounded-full bg-emerald-400" />
                 <span className="text-xs text-text-secondary">
-                  Day {streak} of 30
+                  {profile ? `Day ${Math.max(streak, 1)} of 30` : 'Loading...'}
                 </span>
               </div>
               <span className="text-sm font-medium text-white hidden sm:block">

@@ -3,10 +3,16 @@ import { supabase } from './supabase';
 function getUtcOffsetHours(timezone: string): number {
   try {
     const now = new Date();
-    const utcStr = now.toLocaleString('en-US', { timeZone: 'UTC' });
-    const tzStr = now.toLocaleString('en-US', { timeZone: timezone });
-    const diff = (new Date(tzStr).getTime() - new Date(utcStr).getTime()) / (1000 * 60 * 60);
-    return diff;
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      timeZoneName: 'shortOffset',
+    });
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find((p) => p.type === 'timeZoneName')?.value ?? 'UTC+0';
+    const match = offsetPart.match(/UTC([+-]\d+(?::\d+)?)?/);
+    if (!match || !match[1]) return 0;
+    const [hours, minutes = '0'] = match[1].split(':');
+    return parseInt(hours, 10) + parseInt(minutes, 10) / 60;
   } catch {
     return 0;
   }
