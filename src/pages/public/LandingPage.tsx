@@ -39,74 +39,95 @@ type FadeInProps = {
 type Chapter = {
   title: string;
   icon: typeof Activity;
-  theme: string;
-  border: string;
-  glow: string;
+  tileClass: string;
   desc: string;
-  badge: string;
-  pulse: string;
+  category: string;
+  podSize: string;
+  duration: string;
+  progress: number;
+  progressLabel: string;
+  accentText: string;
+  accentBg: string;
 };
 
 const chapters: Chapter[] = [
   {
     title: 'Fitness Discipline',
     icon: Activity,
-    theme: 'from-orange-500/20 via-red-500/10 to-transparent',
-    border: 'hover:border-orange-500/40',
-    glow: 'bg-orange-500/25',
+    tileClass: 'mission-tile--fitness',
     desc: '30 days of physical intensity, morning runs, and visible proof that you showed up.',
-    badge: 'Body Stack',
-    pulse: 'bg-orange-400',
+    category: 'Body Stack Protocol',
+    podSize: '4–8 POD',
+    duration: '30 DAYS',
+    progress: 78,
+    progressLabel: '78% synced',
+    accentText: 'text-orange-200',
+    accentBg: 'bg-orange-400',
   },
   {
     title: 'Study Grind',
     icon: BookOpen,
-    theme: 'from-blue-500/20 via-cyan-500/10 to-transparent',
-    border: 'hover:border-cyan-500/40',
-    glow: 'bg-cyan-500/20',
+    tileClass: 'mission-tile--study',
     desc: 'Deep work rituals, late-night libraries, and a pod that keeps your focus locked in.',
-    badge: 'Focus Lane',
-    pulse: 'bg-cyan-400',
+    category: 'Focus Lane System',
+    podSize: '4–8 POD',
+    duration: '30 DAYS',
+    progress: 83,
+    progressLabel: '83% retained',
+    accentText: 'text-cyan-200',
+    accentBg: 'bg-cyan-300',
   },
   {
     title: 'Career Focus',
     icon: Briefcase,
-    theme: 'from-emerald-500/20 via-teal-500/10 to-transparent',
-    border: 'hover:border-emerald-500/40',
-    glow: 'bg-emerald-500/20',
+    tileClass: 'mission-tile--career',
     desc: 'Skill leverage, shipped work, and structured accountability for your next professional leap.',
-    badge: 'Operator Mode',
-    pulse: 'bg-emerald-400',
+    category: 'Operator Mode',
+    podSize: '4–8 POD',
+    duration: '30 DAYS',
+    progress: 74,
+    progressLabel: '74% deployed',
+    accentText: 'text-emerald-200',
+    accentBg: 'bg-emerald-300',
   },
   {
     title: 'Breakup Recovery',
     icon: Heart,
-    theme: 'from-rose-500/20 via-pink-500/10 to-transparent',
-    border: 'hover:border-rose-500/40',
-    glow: 'bg-rose-500/20',
+    tileClass: 'mission-tile--recovery',
     desc: 'A calm 30-day reset for rebuilding emotional stability, routine, and momentum.',
-    badge: 'Recovery Pod',
-    pulse: 'bg-rose-400',
+    category: 'Recovery Pod',
+    podSize: '4–8 POD',
+    duration: '30 DAYS',
+    progress: 69,
+    progressLabel: '69% restored',
+    accentText: 'text-rose-200',
+    accentBg: 'bg-rose-300',
   },
   {
     title: 'Sleep Reset',
     icon: Moon,
-    theme: 'from-indigo-500/20 via-slate-500/10 to-transparent',
-    border: 'hover:border-indigo-400/40',
-    glow: 'bg-indigo-400/20',
+    tileClass: 'mission-tile--sleep',
     desc: 'Circadian discipline, quieter nights, and a squad that notices if you drift.',
-    badge: 'Night Protocol',
-    pulse: 'bg-indigo-300',
+    category: 'Night Protocol',
+    podSize: '4–8 POD',
+    duration: '30 DAYS',
+    progress: 86,
+    progressLabel: '86% stabilized',
+    accentText: 'text-indigo-200',
+    accentBg: 'bg-indigo-300',
   },
   {
     title: 'Founder Mode',
     icon: Zap,
-    theme: 'from-violet-500/20 via-purple-500/10 to-transparent',
-    border: 'hover:border-violet-400/40',
-    glow: 'bg-violet-400/20',
+    tileClass: 'mission-tile--founder',
     desc: 'Weekly shipping, MVP pressure, and peers who expect proof instead of ideas.',
-    badge: 'Build Cycle',
-    pulse: 'bg-violet-400',
+    category: 'Launch Cycle',
+    podSize: '4–8 POD',
+    duration: '30 DAYS',
+    progress: 71,
+    progressLabel: '71% shipping',
+    accentText: 'text-violet-200',
+    accentBg: 'bg-violet-300',
   },
 ];
 
@@ -661,10 +682,13 @@ const ProblemSection = () => (
 const ChaptersSection = () => (
   <section className="relative overflow-hidden py-24 md:py-40">
     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    <div className="pointer-events-none absolute inset-x-0 top-12 mx-auto h-48 w-[min(88rem,90vw)] rounded-full bg-gradient-to-r from-orange-500/10 via-violet-500/10 to-cyan-500/10 blur-3xl" />
     <div className="container relative z-10 mx-auto px-4 sm:px-6">
       <div className="mb-20 flex flex-col gap-12 md:flex-row md:items-end md:justify-between">
         <FadeIn className="max-w-xl">
-          <span className="mb-4 block text-xs font-bold uppercase tracking-[0.3em] text-amber-500">Selection</span>
+          <span className="mb-4 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.26em] text-amber-300 backdrop-blur-xl">
+            Mission Catalog
+          </span>
           <h2 className="mb-6 font-display text-4xl font-medium tracking-tight md:text-5xl lg:text-7xl">Choose your chapter.</h2>
           <p className="text-xl font-light leading-relaxed text-white/50">
             Missions are curated by intense focuses. You are not just joining an app; you are entering a 30-day crucible.
@@ -692,51 +716,51 @@ const ChaptersSection = () => (
             >
               <Link
                 to="/signup"
-                className={cn(
-                  'group relative block h-full overflow-hidden rounded-[2.5rem] border border-white/5 bg-[#080808] p-10 transition-all duration-700 hover:-translate-y-4 hover:shadow-[0_40px_80px_rgba(0,0,0,0.8)]',
-                  chapter.border,
-                )}
+                className={cn('mission-tile group relative block h-full min-h-[31rem] overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#080808] p-8 md:p-9', chapter.tileClass)}
               >
-                <div className="absolute inset-0">
-                  <div className={cn('absolute inset-0 bg-gradient-to-br opacity-90 transition-opacity duration-700', chapter.theme)} />
-                  <div className="absolute inset-0 bg-grid-white opacity-[0.02]" />
-                  <div className={cn('absolute -right-12 -top-16 h-48 w-48 rounded-full blur-[90px] opacity-60 transition-all duration-700 group-hover:opacity-100', chapter.glow)} />
-                  <div className="absolute left-6 top-6 h-24 w-24 rounded-full border border-white/8" />
-                  <div className="absolute bottom-8 left-8 right-8">
-                    <MetricBar color="bg-white/20" width="80%" />
-                    <div className="mt-3 flex gap-2">
-                      <MetricBar color={chapter.pulse} width="65%" />
-                      <MetricBar color="bg-white/15" width="48%" />
-                    </div>
-                  </div>
-                  <svg className="absolute inset-0 h-full w-full opacity-20" viewBox="0 0 400 500" fill="none">
-                    <path d="M20 420 Q140 340 220 360 T380 170" stroke="white" strokeWidth="1" strokeDasharray="8 12" />
-                    <circle cx="288" cy="184" r="28" stroke="white" strokeOpacity="0.2" />
-                  </svg>
-                  <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.55)]" />
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="mission-tile__bg absolute inset-0" />
+                  <div className="mission-tile__midground absolute inset-0" />
+                  <div className="mission-tile__particles absolute inset-0" />
+                  <div className="mission-tile__route absolute inset-0" />
+                  <div className="mission-tile__vignette absolute inset-0" />
                 </div>
 
                 <div className="relative z-10 flex h-full flex-col">
-                  <div className="mb-24 flex items-start justify-between">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-2xl transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10">
-                      <Icon className="h-7 w-7 text-white" />
+                  <div className="mb-12 flex items-start justify-between gap-5">
+                    <div className="mission-tile__icon-wrap flex h-14 w-14 items-center justify-center rounded-2xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl transition-all duration-500">
+                      <Icon className={cn('h-7 w-7', chapter.accentText)} />
                     </div>
-                    <div className="flex flex-col items-end gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
-                      <span className="rounded-full border border-white/5 bg-white/5 px-3 py-1 backdrop-blur-md">30 Days</span>
-                      <span className="rounded-full border border-white/5 bg-white/5 px-3 py-1 backdrop-blur-md">Elite Squad</span>
+                    <div className="flex flex-col items-end gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">
+                      <span className="rounded-full border border-white/20 bg-black/35 px-3 py-1.5 backdrop-blur-xl">{chapter.duration}</span>
+                      <span className="rounded-full border border-white/20 bg-black/35 px-3 py-1.5 backdrop-blur-xl">{chapter.podSize}</span>
                     </div>
                   </div>
 
                   <div className="mt-auto">
-                    <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55 backdrop-blur-md">
-                      <span className={cn('h-2 w-2 rounded-full', chapter.pulse)} />
-                      {chapter.badge}
+                    <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/35 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/75 backdrop-blur-xl">
+                      <span className={cn('h-2 w-2 rounded-full shadow-[0_0_14px_currentColor]', chapter.accentBg)} />
+                      {chapter.category}
                     </div>
-                    <h3 className="mb-4 font-display text-3xl font-medium tracking-tight transition-colors group-hover:text-white">{chapter.title}</h3>
-                    <p className="mb-8 text-lg font-light leading-relaxed text-white/45 transition-colors group-hover:text-white/65">{chapter.desc}</p>
-                    <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white/45 transition-all duration-500 group-hover:scale-105 group-hover:bg-white group-hover:text-black group-hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]">
-                      Enter Mission
-                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <h3 className="mb-4 font-display text-3xl font-medium tracking-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]">{chapter.title}</h3>
+                    <p className="mb-8 text-[17px] font-light leading-relaxed text-white/70">{chapter.desc}</p>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="mission-tile__cta inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-5 py-3 text-sm font-semibold text-white backdrop-blur-xl">
+                          Enter Mission
+                          <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-[0.15em] text-white/75">{chapter.progressLabel}</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-black/50 ring-1 ring-white/15">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${chapter.progress}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.9, delay: 0.15 + index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                          className={cn('h-full rounded-full shadow-[0_0_20px_rgba(255,255,255,0.5)]', chapter.accentBg)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
