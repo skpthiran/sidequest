@@ -65,6 +65,8 @@ export default function Dashboard() {
   }
 
   async function loadDashboardData() {
+    if (!user) return;
+    const userId = user.id;
 
     setLoading(true);
 
@@ -72,7 +74,7 @@ export default function Dashboard() {
     const { data: profileData } = await supabase
       .from('users')
       .select('full_name, life_chapter, goal_statement, streak_count, is_onboarded')
-      .eq('id', user!.id)
+      .eq('id', userId)
       .single();
 
     if (profileData) {
@@ -91,13 +93,13 @@ export default function Dashboard() {
     const { data: checkInData } = await supabase
       .from('check_ins')
       .select('id')
-      .eq('user_id', user!.id)
+      .eq('user_id', userId)
       .eq('check_in_date', today)
       .maybeSingle();
 
     if (checkInData) setCheckedIn(true);
 
-    const pod = await getUserPod(user!.id);
+    const pod = await getUserPod(userId);
     if (pod?.pod_id) {
       setPodData(pod);
       const members = await getPodMembers(pod.pod_id);
@@ -129,6 +131,7 @@ export default function Dashboard() {
       .from('check_ins')
       .insert({
         user_id: user.id,
+        pod_id: podData?.pod_id ?? null,
         check_in_date: today,
         reflection: reflection,
         mood_score: moodScore,

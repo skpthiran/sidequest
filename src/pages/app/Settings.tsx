@@ -59,6 +59,7 @@ export default function Settings() {
   // Danger zone
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -152,14 +153,28 @@ export default function Settings() {
   async function handleDeleteAccount() {
     if (!confirmDelete || !user) return;
     setDeleting(true);
-    // Sign out — full account deletion requires server-side admin API
-    // For now we clear their data and sign them out
-    await supabase.from('pod_members').delete().eq('user_id', user.id);
-    await supabase.from('check_ins').delete().eq('user_id', user.id);
-    await supabase.from('messages').delete().eq('sender_id', user.id);
-    await supabase.from('users').delete().eq('id', user.id);
-    await signOut();
-    navigate('/login');
+    setDeleteError(null);
+    try {
+      const { error: podMembersError } = await supabase.from('pod_members').delete().eq('user_id', user.id);
+      if (podMembersError) throw podMembersError;
+
+      const { error: checkInsError } = await supabase.from('check_ins').delete().eq('user_id', user.id);
+      if (checkInsError) throw checkInsError;
+
+      const { error: messagesError } = await supabase.from('messages').delete().eq('sender_id', user.id);
+      if (messagesError) throw messagesError;
+
+      const { error: usersError } = await supabase.from('users').delete().eq('id', user.id);
+      if (usersError) throw usersError;
+
+      await signOut();
+      navigate('/login');
+    } catch (err: any) {
+      console.error('Delete account failed:', err);
+      setDeleteError(err?.message || 'Failed to delete account. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
@@ -318,6 +333,13 @@ export default function Settings() {
                 <Toggle value={item.value} onChange={item.onChange} />
               </div>
             ))}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="font-medium text-white">Push Notifications</p>
+                <p className="text-sm text-text-secondary">Enable browser push for real-time reminders.</p>
+              </div>
+              <Toggle value={pushEnabled} onChange={() => handlePushToggle()} />
+            </div>
 
             {notifSuccess && (
               <p className="text-sm text-emerald-400">✓ Notification preferences saved</p>
@@ -364,6 +386,9 @@ export default function Settings() {
                 <p className="text-sm text-red-400 font-medium">
                   Are you sure? This will delete all your data and cannot be undone.
                 </p>
+                {deleteError && (
+                  <p className="text-sm text-red-400">{deleteError}</p>
+                )}
                 <div className="flex gap-3">
                   <button
                     onClick={() => setConfirmDelete(false)}
@@ -382,19 +407,6 @@ export default function Settings() {
               </div>
             )}
           </div>
-        </div>
-
-        <div className="flex items-center justify-between p-4 rounded-xl bg-surface border border-border">
-          <div>
-            <p className="font-medium text-text-primary">Daily Reminders</p>
-            <p className="text-sm text-text-secondary">Get notified at 8 AM and 6 PM if you haven't checked in</p>
-          </div>
-          <button
-            onClick={handlePushToggle}
-            className={`w-12 h-6 rounded-full transition-colors ${pushEnabled ? 'bg-primary' : 'bg-surface-2'}`}
-          >
-            <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${pushEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
-          </button>
         </div>
       </div>
     </div>

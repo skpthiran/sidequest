@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { getInviteByToken, acceptInvite } from '../../lib/invites';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,13 +25,13 @@ export default function InvitePage() {
   async function handleJoin() {
     if (!user) {
       sessionStorage.setItem('pendingInviteToken', token!);
-      navigate('/auth');
+      navigate('/signup');
       return;
     }
     setJoining(true);
     try {
       await acceptInvite(token!, user.id);
-      navigate('/app/dashboard');
+      navigate('/app');
     } catch (err: any) {
       setError(err.message || 'Failed to join pod.');
     } finally {

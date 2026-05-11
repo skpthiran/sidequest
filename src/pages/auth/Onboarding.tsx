@@ -59,7 +59,7 @@ export default function Onboarding() {
     setSaving(true);
     setError(null);
 
-    const { error } = await supabase
+    const { error: upsertError } = await supabase
       .from('users')
       .upsert({
         id: user.id,
@@ -70,25 +70,23 @@ export default function Onboarding() {
         is_onboarded: true,
       }, { onConflict: 'id' });
 
-    if (error) {
-      setError(error.message);
+    if (upsertError) {
+      setError(upsertError.message);
       setSaving(false);
       return;
     }
 
-    if (!error) {
-      const pendingToken = sessionStorage.getItem('pendingInviteToken');
-      if (pendingToken) {
-        sessionStorage.removeItem('pendingInviteToken');
-        try {
-          await acceptInvite(pendingToken, user.id);
-        } catch (e) {
-          // invite may be expired or already used — proceed anyway
-          console.warn('Invite accept failed:', e);
-        }
+    const pendingToken = sessionStorage.getItem('pendingInviteToken');
+    if (pendingToken) {
+      sessionStorage.removeItem('pendingInviteToken');
+      try {
+        await acceptInvite(pendingToken, user.id);
+      } catch (e) {
+        // invite may be expired or already used — proceed anyway
+        console.warn('Invite accept failed:', e);
       }
-      navigate('/app');
     }
+    navigate('/app');
 
   };
 
@@ -244,7 +242,11 @@ export default function Onboarding() {
             </button>
             <button
               onClick={handleNext}
-              disabled={(step === 1 && !selectedChapter) || (step === 2 && !fullName.trim()) || saving}
+              disabled={
+                (step === 1 && !selectedChapter) ||
+                (step === 2 && (!fullName.trim() || !goalStatement.trim())) ||
+                saving
+              }
               className="px-8 py-3 rounded-full bg-white text-background font-medium hover:bg-gray-100 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : step === 3 ? 'Enter Mission Control' : 'Continue'}
