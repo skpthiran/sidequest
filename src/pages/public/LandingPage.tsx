@@ -686,7 +686,10 @@ const ChaptersSection = () => (
     <div className="container relative z-10 mx-auto px-4 sm:px-6">
       <div className="mb-20 flex flex-col gap-12 md:flex-row md:items-end md:justify-between">
         <FadeIn className="max-w-xl">
-          <span className="mb-4 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.26em] text-amber-300 backdrop-blur-xl">
+          <span
+            className="mb-4 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.26em] text-amber-300 backdrop-blur-xl"
+            aria-label="Section category: Mission Catalog"
+          >
             Mission Catalog
           </span>
           <h2 className="mb-6 font-display text-4xl font-medium tracking-tight md:text-5xl lg:text-7xl">Choose your chapter.</h2>
@@ -750,9 +753,7 @@ const ChaptersSection = () => (
                           Enter Mission
                           <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                         </div>
-                        <span className="text-xs font-semibold uppercase tracking-[0.15em] text-white/75" aria-label={`Mission completion ${chapter.progressLabel}`}>
-                          {chapter.progressLabel}
-                        </span>
+                        <span className="text-xs font-semibold uppercase tracking-[0.15em] text-white/75">{chapter.progressLabel}</span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-black/50 ring-1 ring-white/15">
                         <motion.div

@@ -429,6 +429,7 @@ body {
   background: radial-gradient(circle at 22% 28%, rgba(125, 211, 252, 0.35) 0 8px, transparent 9px),
     radial-gradient(circle at 70% 46%, rgba(125, 211, 252, 0.23) 0 11px, transparent 12px),
     radial-gradient(circle at 40% 68%, rgba(224, 242, 254, 0.15) 0 15px, transparent 16px);
+  background-size: 170px 170px, 220px 220px, 200px 200px;
 }
 
 .mission-tile--recovery .mission-tile__bg {
@@ -492,6 +493,7 @@ body {
 .mission-tile--founder .mission-tile__route {
   background: linear-gradient(155deg, transparent 62%, rgba(250, 204, 21, 0.3) 74%, transparent 92%),
     radial-gradient(ellipse at 62% 70%, rgba(167, 139, 250, 0.24), transparent 52%);
+  background-size: 100% 100%, 120% 120%;
 }
 
 /* ── Scrollbar ── */
