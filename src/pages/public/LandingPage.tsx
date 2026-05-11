@@ -750,7 +750,9 @@ const ChaptersSection = () => (
                           Enter Mission
                           <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                         </div>
-                        <span className="text-xs font-semibold uppercase tracking-[0.15em] text-white/75">{chapter.progressLabel}</span>
+                        <span className="text-xs font-semibold uppercase tracking-[0.15em] text-white/75" aria-label={`Mission completion ${chapter.progressLabel}`}>
+                          {chapter.progressLabel}
+                        </span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-black/50 ring-1 ring-white/15">
                         <motion.div

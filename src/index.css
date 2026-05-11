@@ -266,7 +266,7 @@ body {
 
 @keyframes mission-sweep {
   0% {
-    transform: translateX(-125%) rotate(12deg);
+    transform: translateX(-100%) rotate(12deg);
     opacity: 0;
   }
   35%,
@@ -320,7 +320,7 @@ body {
 }
 
 .mission-tile:hover::before {
-  animation: mission-sweep 1.15s ease;
+  animation: mission-sweep 1.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .mission-tile:hover::after {
